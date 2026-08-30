@@ -1,15 +1,29 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 function yen(n) {
   return `¥${Math.round(n).toLocaleString('ja-JP')}`;
 }
 
 export default function SupplierCard({ supplier, items, onQtyChange, onCheckToggle, onCompleteOrder }) {
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+
   const { subtotal, hasOrder } = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + it.unit_price * (it.order_qty || 0), 0);
     const hasOrder = items.some((it) => (it.order_qty || 0) > 0);
     return { subtotal, hasOrder };
   }, [items]);
+
+  const onOrderedCheck = async (e) => {
+    if (!e.target.checked) return;
+    setSaving(true);
+    try {
+      await onCompleteOrder(supplier, items, note);
+      setNote('');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const threshold = supplier.free_shipping_threshold;
   const reached = threshold != null && subtotal >= threshold;
@@ -94,9 +108,26 @@ export default function SupplierCard({ supplier, items, onQtyChange, onCheckTogg
             </div>
           </>
         )}
-        <button className="osf-order-btn" disabled={!hasOrder} onClick={() => onCompleteOrder(supplier, items)}>
-          発注済みにする
-        </button>
+        <div className="osf-order-check-row">
+          <label className="osf-order-check-label">
+            <input
+              type="checkbox"
+              className="osf-check-input"
+              checked={false}
+              disabled={!hasOrder || saving}
+              onChange={onOrderedCheck}
+            />
+            発注済み
+          </label>
+          <input
+            type="text"
+            className="osf-note-input"
+            placeholder="備考（任意）"
+            value={note}
+            disabled={saving}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
       </div>
     </div>
   );

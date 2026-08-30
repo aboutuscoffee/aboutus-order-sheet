@@ -77,17 +77,11 @@ export default function App() {
     updateItemQty(itemId, { stock_checked: checked }).catch((e) => showToast(e.message, true));
   }, [showToast]);
 
-  const onCompleteOrder = useCallback(async (supplier, supplierItems) => {
+  const onCompleteOrder = useCallback(async (supplier, supplierItems, note) => {
     const ordered = supplierItems.filter((it) => (it.order_qty || 0) > 0);
     if (ordered.length === 0) return;
-    const orderedBy = await askConfirm(
-      `${supplier.name} への発注を確定し、発注数をリセットします。発注者名を入力してください。`,
-      '発注済みにする',
-      { withInput: true, inputPlaceholder: '例: 松田' }
-    );
-    if (!orderedBy) return;
     try {
-      const saved = await completeOrder(supplier, ordered, orderedBy);
+      const saved = await completeOrder(supplier, ordered, note);
       const ids = new Set(ordered.map((it) => it.id));
       setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, order_qty: 0, stock_checked: false } : it)));
       setHistory((prev) => (prev ? [saved, ...prev] : prev));
@@ -95,7 +89,7 @@ export default function App() {
     } catch (e) {
       showToast(e.message, true);
     }
-  }, [showToast, askConfirm]);
+  }, [showToast]);
 
   const onSaveSupplier = useCallback(async (supplier) => {
     try {

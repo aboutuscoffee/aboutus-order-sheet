@@ -73,6 +73,9 @@ body {
 .osf-progress-label.osf-reached { color: var(--good); font-weight: 500; }
 .osf-order-btn { width: 100%; padding: 10px; border: none; background: var(--dark); color: #F2F4EC; font-size: 13px; font-weight: 500; border-radius: 8px; margin-top: 4px; }
 .osf-order-btn:disabled { opacity: 0.4; cursor: default; }
+.osf-order-check-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.osf-order-check-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.osf-note-input { flex: 1; }
 
 /* Settings */
 .osf-section-title { font-size: 12px; font-weight: 500; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
@@ -96,6 +99,7 @@ body {
 .osf-history-detail { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--line); display: none; font-size: 12px; }
 .osf-history-detail.open { display: block; }
 .osf-history-row { display: flex; justify-content: space-between; padding: 3px 0; }
+.osf-history-note { background: var(--accent-soft); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; color: var(--dark); }
 
 /* Confirm modal */
 .osf-modal-backdrop { position: fixed; inset: 0; background: rgba(42, 46, 36, 0.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }

@@ -31,6 +31,7 @@ export default function HistoryTab({ history }) {
             <div className="osf-history-total">{yen(h.total_amount)}</div>
           </div>
           <div className={'osf-history-detail' + (openId === h.id ? ' open' : '')}>
+            {h.note && <div className="osf-history-note">{h.note}</div>}
             {h.items.map((it, i) => (
               <div className="osf-history-row" key={i}>
                 <span>{it.name} × {it.order_qty}{it.unit || ''}</span>
