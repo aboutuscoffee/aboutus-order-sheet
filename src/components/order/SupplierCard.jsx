@@ -4,7 +4,7 @@ function yen(n) {
   return `¥${Math.round(n).toLocaleString('ja-JP')}`;
 }
 
-export default function SupplierCard({ supplier, items, onQtyChange, onCompleteOrder }) {
+export default function SupplierCard({ supplier, items, onQtyChange, onCheckToggle, onCompleteOrder }) {
   const { subtotal, hasOrder } = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + it.unit_price * (it.order_qty || 0), 0);
     const hasOrder = items.some((it) => (it.order_qty || 0) > 0);
@@ -31,6 +31,7 @@ export default function SupplierCard({ supplier, items, onQtyChange, onCompleteO
           <tr>
             <th>商品</th>
             <th style={{ textAlign: 'right' }}>在庫</th>
+            <th style={{ textAlign: 'center' }}>確認</th>
             <th style={{ textAlign: 'right' }}>発注数</th>
             <th style={{ textAlign: 'right' }}>小計</th>
           </tr>
@@ -52,6 +53,14 @@ export default function SupplierCard({ supplier, items, onQtyChange, onCompleteO
                   min="0"
                   value={it.stock_qty}
                   onChange={(e) => onQtyChange(it.id, 'stock_qty', e.target.value)}
+                />
+              </td>
+              <td style={{ textAlign: 'center' }}>
+                <input
+                  className="osf-check-input"
+                  type="checkbox"
+                  checked={!!it.stock_checked}
+                  onChange={(e) => onCheckToggle(it.id, e.target.checked)}
                 />
               </td>
               <td>

@@ -72,6 +72,11 @@ export default function App() {
     }, QTY_SAVE_DELAY);
   }, [showToast]);
 
+  const onCheckToggle = useCallback((itemId, checked) => {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, stock_checked: checked } : it)));
+    updateItemQty(itemId, { stock_checked: checked }).catch((e) => showToast(e.message, true));
+  }, [showToast]);
+
   const onCompleteOrder = useCallback(async (supplier, supplierItems) => {
     const ordered = supplierItems.filter((it) => (it.order_qty || 0) > 0);
     if (ordered.length === 0) return;
@@ -84,7 +89,7 @@ export default function App() {
     try {
       const saved = await completeOrder(supplier, ordered, orderedBy);
       const ids = new Set(ordered.map((it) => it.id));
-      setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, order_qty: 0 } : it)));
+      setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, order_qty: 0, stock_checked: false } : it)));
       setHistory((prev) => (prev ? [saved, ...prev] : prev));
       showToast('発注済みにしました');
     } catch (e) {
@@ -169,7 +174,13 @@ export default function App() {
       <div className="osf-body">
         {toast && <div className={toast.isError ? 'osf-toast-err' : 'osf-toast'}>{toast.text}</div>}
         {activeTab === 'order' && (
-          <OrderTab suppliers={suppliers} items={items} onQtyChange={onQtyChange} onCompleteOrder={onCompleteOrder} />
+          <OrderTab
+            suppliers={suppliers}
+            items={items}
+            onQtyChange={onQtyChange}
+            onCheckToggle={onCheckToggle}
+            onCompleteOrder={onCompleteOrder}
+          />
         )}
         {activeTab === 'history' && <HistoryTab history={history ?? []} />}
         {activeTab === 'settings' && (

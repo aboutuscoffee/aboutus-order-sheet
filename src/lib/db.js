@@ -78,7 +78,7 @@ export async function completeOrder(supplier, orderedItems, orderedBy) {
 
   const { error: resetError } = await supabase
     .from('os_items')
-    .update({ order_qty: 0 })
+    .update({ order_qty: 0, stock_checked: false })
     .in('id', orderedItems.map((it) => it.id));
   if (resetError) throw new Error(resetError.message);
 

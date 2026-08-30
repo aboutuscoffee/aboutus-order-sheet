@@ -1,6 +1,6 @@
 import SupplierCard from './SupplierCard';
 
-export default function OrderTab({ suppliers, items, onQtyChange, onCompleteOrder }) {
+export default function OrderTab({ suppliers, items, onQtyChange, onCheckToggle, onCompleteOrder }) {
   if (suppliers.length === 0) {
     return <div className="osf-empty">発注先が未登録です。「設定」タブから追加してください。</div>;
   }
@@ -13,6 +13,7 @@ export default function OrderTab({ suppliers, items, onQtyChange, onCompleteOrde
           supplier={supplier}
           items={items.filter((it) => it.supplier_id === supplier.id)}
           onQtyChange={onQtyChange}
+          onCheckToggle={onCheckToggle}
           onCompleteOrder={onCompleteOrder}
         />
       ))}
