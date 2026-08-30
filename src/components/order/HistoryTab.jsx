@@ -23,7 +23,10 @@ export default function HistoryTab({ history }) {
           <div className="osf-history-top" onClick={() => setOpenId(openId === h.id ? null : h.id)}>
             <div>
               <div className="osf-history-supplier">{h.supplier_name}</div>
-              <div className="osf-history-date">{formatDate(h.ordered_at)}</div>
+              <div className="osf-history-date">
+                {formatDate(h.ordered_at)}
+                {h.ordered_by ? `・発注者: ${h.ordered_by}` : ''}
+              </div>
             </div>
             <div className="osf-history-total">{yen(h.total_amount)}</div>
           </div>

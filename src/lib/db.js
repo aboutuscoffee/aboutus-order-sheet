@@ -53,7 +53,7 @@ export async function updateItemQty(id, fields) {
   return data;
 }
 
-export async function completeOrder(supplier, orderedItems) {
+export async function completeOrder(supplier, orderedItems, orderedBy) {
   const total_amount = orderedItems.reduce((sum, it) => sum + it.unit_price * it.order_qty, 0);
   const snapshot = orderedItems.map((it) => ({
     name: it.name,
@@ -70,6 +70,7 @@ export async function completeOrder(supplier, orderedItems) {
       supplier_name: supplier.name,
       items: snapshot,
       total_amount,
+      ordered_by: orderedBy,
     })
     .select()
     .single();

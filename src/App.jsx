@@ -27,10 +27,10 @@ export default function App() {
   const saveTimers = useRef({});
   const confirmResolver = useRef(null);
 
-  const askConfirm = useCallback((message, okLabel) => {
+  const askConfirm = useCallback((message, okLabel, options = {}) => {
     return new Promise((resolve) => {
       confirmResolver.current = resolve;
-      setConfirmState({ message, okLabel });
+      setConfirmState({ message, okLabel, ...options });
     });
   }, []);
 
@@ -75,9 +75,14 @@ export default function App() {
   const onCompleteOrder = useCallback(async (supplier, supplierItems) => {
     const ordered = supplierItems.filter((it) => (it.order_qty || 0) > 0);
     if (ordered.length === 0) return;
-    if (!(await askConfirm(`${supplier.name} への発注を確定し、発注数をリセットします。よろしいですか？`, '発注済みにする'))) return;
+    const orderedBy = await askConfirm(
+      `${supplier.name} への発注を確定し、発注数をリセットします。発注者名を入力してください。`,
+      '発注済みにする',
+      { withInput: true, inputPlaceholder: '例: 松田' }
+    );
+    if (!orderedBy) return;
     try {
-      const saved = await completeOrder(supplier, ordered);
+      const saved = await completeOrder(supplier, ordered, orderedBy);
       const ids = new Set(ordered.map((it) => it.id));
       setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, order_qty: 0 } : it)));
       setHistory((prev) => (prev ? [saved, ...prev] : prev));

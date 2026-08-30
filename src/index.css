@@ -100,4 +100,6 @@ body {
 .osf-modal-backdrop { position: fixed; inset: 0; background: rgba(42, 46, 36, 0.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
 .osf-modal { background: var(--surface); border-radius: 12px; padding: 20px; max-width: 320px; width: 100%; }
 .osf-modal-text { font-size: 13px; margin: 0 0 16px; line-height: 1.6; }
+.osf-modal-input { margin-bottom: 16px; }
 .osf-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.osf-mini-btn:disabled { opacity: 0.4; cursor: default; }
