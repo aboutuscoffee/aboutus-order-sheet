@@ -41,11 +41,66 @@ function SupplierRow({ supplier, onSave, onDelete }) {
   );
 }
 
-function ItemRow({ item, suppliers, onSave, onDelete }) {
+function LocationRow({ location, onSave, onDelete }) {
+  const [name, setName] = useState(location.name);
+
+  const commit = () => {
+    if (name.trim() && name !== location.name) onSave({ ...location, name: name.trim() });
+  };
+
+  return (
+    <div className="osf-settings-item">
+      <div className="osf-settings-item-top">
+        <input value={name} onChange={(e) => setName(e.target.value)} onBlur={commit} style={{ fontWeight: 600 }} />
+        <button className="osf-mini-btn osf-danger" onClick={() => onDelete(location.id)}>
+          削除
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AddLocationBox({ onAdd, nextOrder }) {
+  const [name, setName] = useState('');
+
+  const submit = () => {
+    if (!name.trim()) return;
+    onAdd({ name: name.trim(), sort_order: nextOrder });
+    setName('');
+  };
+
+  return (
+    <div className="osf-add-box">
+      <div className="osf-form-row">
+        <label>置き場名</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="例: 倉庫・店頭" />
+      </div>
+      <button className="osf-mini-btn osf-primary" onClick={submit}>
+        + 置き場を追加
+      </button>
+    </div>
+  );
+}
+
+function LocationSelect({ locations, value, onChange }) {
+  return (
+    <select value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
+      <option value="">未設定</option>
+      {locations.map((l) => (
+        <option key={l.id} value={l.id}>
+          {l.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
   const [name, setName] = useState(item.name);
   const [unit, setUnit] = useState(item.unit ?? '');
   const [unitPrice, setUnitPrice] = useState(item.unit_price);
   const [supplierId, setSupplierId] = useState(item.supplier_id);
+  const [locationId, setLocationId] = useState(item.location_id ?? null);
 
   const commit = (overrides = {}) => {
     const next = {
@@ -54,6 +109,7 @@ function ItemRow({ item, suppliers, onSave, onDelete }) {
       unit,
       unit_price: Number(unitPrice) || 0,
       supplier_id: supplierId,
+      location_id: locationId,
       ...overrides,
     };
     onSave(next);
@@ -93,6 +149,17 @@ function ItemRow({ item, suppliers, onSave, onDelete }) {
           ))}
         </select>
       </div>
+      <div className="osf-form-row">
+        <label>置き場</label>
+        <LocationSelect
+          locations={locations}
+          value={locationId}
+          onChange={(v) => {
+            setLocationId(v);
+            commit({ location_id: v });
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -119,11 +186,12 @@ function AddSupplierBox({ onAdd }) {
   );
 }
 
-function AddItemBox({ suppliers, onAdd }) {
+function AddItemBox({ suppliers, locations, onAdd }) {
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? '');
+  const [locationId, setLocationId] = useState(null);
 
   const submit = () => {
     if (!name.trim() || !supplierId) return;
@@ -132,6 +200,7 @@ function AddItemBox({ suppliers, onAdd }) {
       unit,
       unit_price: Number(unitPrice) || 0,
       supplier_id: supplierId,
+      location_id: locationId,
       stock_qty: 0,
       order_qty: 0,
       sort_order: 0,
@@ -172,6 +241,10 @@ function AddItemBox({ suppliers, onAdd }) {
           ))}
         </select>
       </div>
+      <div className="osf-form-row">
+        <label>置き場</label>
+        <LocationSelect locations={locations} value={locationId} onChange={setLocationId} />
+      </div>
       <button className="osf-mini-btn osf-primary" onClick={submit}>
         + 商品を追加
       </button>
@@ -179,7 +252,17 @@ function AddItemBox({ suppliers, onAdd }) {
   );
 }
 
-export default function SettingsTab({ suppliers, items, onSaveSupplier, onDeleteSupplier, onSaveItem, onDeleteItem }) {
+export default function SettingsTab({
+  suppliers,
+  items,
+  locations,
+  onSaveSupplier,
+  onDeleteSupplier,
+  onSaveItem,
+  onDeleteItem,
+  onSaveLocation,
+  onDeleteLocation,
+}) {
   return (
     <div>
       <div className="osf-section-title">発注先</div>
@@ -188,11 +271,17 @@ export default function SettingsTab({ suppliers, items, onSaveSupplier, onDelete
       ))}
       <AddSupplierBox onAdd={onSaveSupplier} />
 
+      <div className="osf-section-title">置き場</div>
+      {locations.map((l) => (
+        <LocationRow key={l.id} location={l} onSave={onSaveLocation} onDelete={onDeleteLocation} />
+      ))}
+      <AddLocationBox onAdd={onSaveLocation} nextOrder={locations.length} />
+
       <div className="osf-section-title">商品</div>
       {items.map((it) => (
-        <ItemRow key={it.id} item={it} suppliers={suppliers} onSave={onSaveItem} onDelete={onDeleteItem} />
+        <ItemRow key={it.id} item={it} suppliers={suppliers} locations={locations} onSave={onSaveItem} onDelete={onDeleteItem} />
       ))}
-      <AddItemBox suppliers={suppliers} onAdd={onSaveItem} />
+      <AddItemBox suppliers={suppliers} locations={locations} onAdd={onSaveItem} />
     </div>
   );
 }

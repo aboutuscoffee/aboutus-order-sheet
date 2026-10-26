@@ -22,7 +22,12 @@ export default function HistoryTab({ history }) {
         <div key={h.id} className="osf-history-item">
           <div className="osf-history-top" onClick={() => setOpenId(openId === h.id ? null : h.id)}>
             <div>
-              <div className="osf-history-supplier">{h.supplier_name}</div>
+              <div className="osf-history-supplier">
+                {h.supplier_name}
+                <span className={'osf-history-badge' + (h.all_delivered ? ' osf-done' : '')}>
+                  {h.all_delivered ? '納品済み' : '納品待ち'}
+                </span>
+              </div>
               <div className="osf-history-date">
                 {formatDate(h.ordered_at)}
                 {h.ordered_by ? `・発注者: ${h.ordered_by}` : ''}
@@ -34,7 +39,11 @@ export default function HistoryTab({ history }) {
             {h.note && <div className="osf-history-note">{h.note}</div>}
             {h.items.map((it, i) => (
               <div className="osf-history-row" key={i}>
-                <span>{it.name} × {it.order_qty}{it.unit || ''}</span>
+                <span>
+                  {it.name} × {it.order_qty}
+                  {it.unit || ''}
+                  {it.delivered ? '　✓納品済み' : ''}
+                </span>
                 <span>{yen(it.subtotal)}</span>
               </div>
             ))}

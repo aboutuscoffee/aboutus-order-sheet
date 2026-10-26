@@ -1,19 +1,44 @@
 import { supabase } from './supabase';
 
 export async function fetchAll() {
-  const [suppliers, items] = await Promise.all([
+  const [suppliers, items, locations] = await Promise.all([
     supabase.from('os_suppliers').select('*').order('sort_order', { ascending: true }),
     supabase.from('os_items').select('*').eq('active', true).order('sort_order', { ascending: true }),
+    supabase.from('os_locations').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
   ]);
 
-  for (const res of [suppliers, items]) {
+  for (const res of [suppliers, items, locations]) {
     if (res.error) throw new Error(res.error.message);
   }
 
   return {
     suppliers: suppliers.data ?? [],
     items: items.data ?? [],
+    locations: locations.data ?? [],
   };
+}
+
+export async function upsertLocation(location) {
+  const { data, error } = await supabase.from('os_locations').upsert(location).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteLocation(id) {
+  const { error } = await supabase.from('os_locations').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateHistoryDelivery(id, items) {
+  const all_delivered = items.every((it) => it.delivered);
+  const { data, error } = await supabase
+    .from('os_order_history')
+    .update({ items, all_delivered })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function fetchHistory() {
@@ -61,6 +86,7 @@ export async function completeOrder(supplier, orderedItems, note) {
     unit_price: it.unit_price,
     order_qty: it.order_qty,
     subtotal: it.unit_price * it.order_qty,
+    delivered: false,
   }));
 
   const { data, error } = await supabase

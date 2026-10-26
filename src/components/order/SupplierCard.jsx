@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react';
+import { yen, formatShortDate } from '../../lib/format';
 
-function yen(n) {
-  return `¥${Math.round(n).toLocaleString('ja-JP')}`;
-}
-
-export default function SupplierCard({ supplier, items, onQtyChange, onCheckToggle, onCompleteOrder }) {
+export default function SupplierCard({ supplier, items, lastOrder, onQtyChange, onCheckToggle, onCompleteOrder }) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -108,6 +105,11 @@ export default function SupplierCard({ supplier, items, onQtyChange, onCheckTogg
             </div>
           </>
         )}
+        <div className="osf-last-order">
+          {lastOrder
+            ? `前回発注: ${formatShortDate(lastOrder.ordered_at)}${lastOrder.note ? `　${lastOrder.note}` : ''}`
+            : '前回発注: なし'}
+        </div>
         <div className="osf-order-check-row">
           <label className="osf-order-check-label">
             <input

@@ -6,7 +6,10 @@ import {
   deleteSupplier,
   upsertItem,
   deleteItem,
+  upsertLocation,
+  deleteLocation,
   updateItemQty,
+  updateHistoryDelivery,
   completeOrder,
 } from './lib/db';
 import OrderTab from './components/order/OrderTab';
@@ -19,6 +22,7 @@ const QTY_SAVE_DELAY = 500;
 export default function App() {
   const [suppliers, setSuppliers] = useState(null);
   const [items, setItems] = useState(null);
+  const [locations, setLocations] = useState(null);
   const [history, setHistory] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('order');
@@ -41,21 +45,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetchAll()
-      .then(({ suppliers, items }) => {
+    Promise.all([fetchAll(), fetchHistory()])
+      .then(([{ suppliers, items, locations }, history]) => {
         setSuppliers(suppliers);
         setItems(items);
+        setLocations(locations);
+        setHistory(history);
       })
       .catch((e) => setError(e.message));
   }, []);
-
-  useEffect(() => {
-    if (activeTab === 'history' && history === null) {
-      fetchHistory()
-        .then(setHistory)
-        .catch((e) => setError(e.message));
-    }
-  }, [activeTab, history]);
 
   const showToast = useCallback((text, isError = false) => {
     setToast({ text, isError });
@@ -84,9 +82,21 @@ export default function App() {
       const saved = await completeOrder(supplier, ordered, note);
       const ids = new Set(ordered.map((it) => it.id));
       setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, order_qty: 0, stock_checked: false } : it)));
-      setHistory((prev) => (prev ? [saved, ...prev] : prev));
+      setHistory((prev) => [saved, ...prev]);
       showToast('発注済みにしました');
     } catch (e) {
+      showToast(e.message, true);
+    }
+  }, [showToast]);
+
+  const onToggleDelivered = useCallback(async (entry, itemIndex, delivered) => {
+    const nextItems = entry.items.map((it, i) => (i === itemIndex ? { ...it, delivered } : it));
+    const allDelivered = nextItems.every((it) => it.delivered);
+    setHistory((prev) => prev.map((h) => (h.id === entry.id ? { ...h, items: nextItems, all_delivered: allDelivered } : h)));
+    try {
+      await updateHistoryDelivery(entry.id, nextItems);
+    } catch (e) {
+      setHistory((prev) => prev.map((h) => (h.id === entry.id ? entry : h)));
       showToast(e.message, true);
     }
   }, [showToast]);
@@ -136,6 +146,29 @@ export default function App() {
     }
   }, [showToast, askConfirm]);
 
+  const onSaveLocation = useCallback(async (location) => {
+    try {
+      const saved = await upsertLocation(location);
+      setLocations((prev) => {
+        const exists = prev.some((l) => l.id === saved.id);
+        return exists ? prev.map((l) => (l.id === saved.id ? saved : l)) : [...prev, saved];
+      });
+    } catch (e) {
+      showToast(e.message, true);
+    }
+  }, [showToast]);
+
+  const onDeleteLocation = useCallback(async (id) => {
+    if (!(await askConfirm('この置き場を削除しますか？商品の置き場は「未設定」に戻ります。', '削除する'))) return;
+    try {
+      await deleteLocation(id);
+      setLocations((prev) => prev.filter((l) => l.id !== id));
+      setItems((prev) => prev.map((it) => (it.location_id === id ? { ...it, location_id: null } : it)));
+    } catch (e) {
+      showToast(e.message, true);
+    }
+  }, [showToast, askConfirm]);
+
   const changeTab = (tab) => {
     setActiveTab(tab);
     setToast(null);
@@ -144,7 +177,7 @@ export default function App() {
   if (error) {
     return <div id="osf-app"><div className="osf-body"><div className="osf-toast-err">読み込みエラー：{error}</div></div></div>;
   }
-  if (!suppliers || !items) {
+  if (!suppliers || !items || !locations || !history) {
     return <div id="osf-app"><div className="osf-loading">読み込み中…</div></div>;
   }
 
@@ -171,20 +204,26 @@ export default function App() {
           <OrderTab
             suppliers={suppliers}
             items={items}
+            locations={locations}
+            history={history}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
             onCompleteOrder={onCompleteOrder}
+            onToggleDelivered={onToggleDelivered}
           />
         )}
-        {activeTab === 'history' && <HistoryTab history={history ?? []} />}
+        {activeTab === 'history' && <HistoryTab history={history} />}
         {activeTab === 'settings' && (
           <SettingsTab
             suppliers={suppliers}
             items={items}
+            locations={locations}
             onSaveSupplier={onSaveSupplier}
             onDeleteSupplier={onDeleteSupplier}
             onSaveItem={onSaveItem}
             onDeleteItem={onDeleteItem}
+            onSaveLocation={onSaveLocation}
+            onDeleteLocation={onDeleteLocation}
           />
         )}
       </div>

@@ -101,6 +101,25 @@ body {
 .osf-history-row { display: flex; justify-content: space-between; padding: 3px 0; }
 .osf-history-note { background: var(--accent-soft); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; color: var(--dark); }
 
+/* View toggle / pending deliveries / last order */
+.osf-view-toggle { display: flex; gap: 4px; background: var(--accent-soft); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
+.osf-view-btn { flex: 1; border: none; background: transparent; padding: 7px 8px; font-size: 13px; font-weight: 500; color: var(--ink-soft); border-radius: 999px; }
+.osf-view-btn.active { background: var(--dark); color: #F2F4EC; }
+.osf-pending { margin-bottom: 18px; }
+.osf-pending-card { background: var(--warn-soft); border: 0.5px solid #E0BC9E; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
+.osf-pending-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.osf-pending-supplier { font-size: 14px; font-weight: 600; }
+.osf-pending-date { font-size: 11px; color: var(--ink-soft); }
+.osf-pending-note { font-size: 12px; color: var(--ink-soft); margin-bottom: 4px; }
+.osf-pending-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 0.5px solid #E8D3BF; font-size: 13px; cursor: pointer; }
+.osf-pending-row.osf-done { color: var(--ink-soft); text-decoration: line-through; }
+.osf-pending-item { flex: 1; }
+.osf-pending-state { font-size: 11px; color: var(--warn); }
+.osf-pending-row.osf-done .osf-pending-state { color: var(--good); }
+.osf-last-order { font-size: 12px; color: var(--ink-soft); margin-bottom: 8px; }
+.osf-history-badge { margin-left: 8px; font-size: 10px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
+.osf-history-badge.osf-done { background: var(--good-soft); color: var(--good); }
+
 /* Confirm modal */
 .osf-modal-backdrop { position: fixed; inset: 0; background: rgba(42, 46, 36, 0.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
 .osf-modal { background: var(--surface); border-radius: 12px; padding: 20px; max-width: 320px; width: 100%; }
