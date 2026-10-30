@@ -76,6 +76,8 @@ body {
 .osf-order-check-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .osf-order-check-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
 .osf-note-input { flex: 1; }
+.osf-request-btn { width: 100%; margin-top: 10px; padding: 9px; border: 0.5px solid var(--accent); background: transparent; color: var(--accent); font-size: 13px; font-weight: 500; border-radius: 8px; }
+.osf-request-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* Settings */
 .osf-section-title { font-size: 12px; font-weight: 500; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }

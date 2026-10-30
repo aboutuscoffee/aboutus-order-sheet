@@ -1,9 +1,19 @@
 import { useMemo, useState } from 'react';
 import { yen, formatShortDate } from '../../lib/format';
+import RequestDialog from './RequestDialog';
 
-export default function SupplierCard({ supplier, items, lastOrder, onQtyChange, onCheckToggle, onCompleteOrder }) {
+export default function SupplierCard({
+  supplier,
+  items,
+  lastOrder,
+  onQtyChange,
+  onCheckToggle,
+  onCompleteOrder,
+  onRequestOrder,
+}) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [requesting, setRequesting] = useState(false);
 
   const { subtotal, hasOrder } = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + it.unit_price * (it.order_qty || 0), 0);
@@ -130,6 +140,16 @@ export default function SupplierCard({ supplier, items, lastOrder, onQtyChange, 
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
+        <button className="osf-request-btn" disabled={!hasOrder} onClick={() => setRequesting(true)}>
+          発注をお願いする（Todoに依頼）
+        </button>
+        {requesting && (
+          <RequestDialog
+            supplier={supplier}
+            onSend={(fromStaff, toStaff) => onRequestOrder({ supplier, items, note, fromStaff, toStaff })}
+            onClose={() => setRequesting(false)}
+          />
+        )}
       </div>
     </div>
   );

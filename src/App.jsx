@@ -12,6 +12,7 @@ import {
   updateHistoryDelivery,
   completeOrder,
 } from './lib/db';
+import { requestOrder } from './lib/todo';
 import OrderTab from './components/order/OrderTab';
 import SettingsTab from './components/order/SettingsTab';
 import HistoryTab from './components/order/HistoryTab';
@@ -87,6 +88,12 @@ export default function App() {
     } catch (e) {
       showToast(e.message, true);
     }
+  }, [showToast]);
+
+  // エラーはダイアログ側でそのまま表示するので、ここでは握りつぶさず投げる
+  const onRequestOrder = useCallback(async (params) => {
+    await requestOrder(params);
+    showToast(`${params.toStaff.name}さんに発注をお願いしました`);
   }, [showToast]);
 
   const onToggleDelivered = useCallback(async (entry, itemIndex, delivered) => {
@@ -209,6 +216,7 @@ export default function App() {
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
             onCompleteOrder={onCompleteOrder}
+            onRequestOrder={onRequestOrder}
             onToggleDelivered={onToggleDelivered}
           />
         )}

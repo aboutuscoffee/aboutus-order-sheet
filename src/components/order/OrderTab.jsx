@@ -21,6 +21,7 @@ export default function OrderTab({
   onQtyChange,
   onCheckToggle,
   onCompleteOrder,
+  onRequestOrder,
   onToggleDelivered,
 }) {
   const [view, setView] = useState(loadView);
@@ -80,6 +81,7 @@ export default function OrderTab({
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
             onCompleteOrder={onCompleteOrder}
+            onRequestOrder={onRequestOrder}
           />
         ))}
 
