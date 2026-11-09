@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchSheetStocks } from '../../lib/sheetImport';
+import { fetchInactiveSheetKeys } from '../../lib/db';
 
 export default function SheetImportDialog({ sheetId, items, supplierNames, onApply, onClose }) {
   const [rows, setRows] = useState(null); // シートの行 Map
+  const [inactiveKeys, setInactiveKeys] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [checked, setChecked] = useState({});
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState(null);
 
   useEffect(() => {
-    fetchSheetStocks(sheetId)
-      .then(setRows)
+    Promise.all([fetchSheetStocks(sheetId), fetchInactiveSheetKeys()])
+      .then(([sheetRows, inactive]) => {
+        setInactiveKeys(inactive);
+        setRows(sheetRows);
+      })
       .catch((e) => setLoadError(e.message));
   }, [sheetId]);
 
@@ -19,7 +24,7 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
     if (!rows) return { candidates: [], silent: [], newRows: [], linked: 0 };
     const candidates = [];
     const silent = [];
-    const keys = new Set();
+    const keys = new Set(inactiveKeys);
     let linked = 0;
     for (const it of items) {
       if (!it.sheet_key) continue;
@@ -39,7 +44,7 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
     }
     const newRows = [...rows.values()].filter((r) => !keys.has(r.key));
     return { candidates, silent, newRows, linked };
-  }, [rows, items]);
+  }, [rows, items, inactiveKeys]);
 
   useEffect(() => {
     setChecked(Object.fromEntries(candidates.map((c) => [c.item.id, !c.appEdited])));

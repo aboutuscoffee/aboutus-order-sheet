@@ -31,6 +31,13 @@ export async function fetchSheetSettings() {
   return Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
 }
 
+// 発注停止中（画面に出ない）商品のシート上の行。「アプリにない新しい行」と間違えて知らせないために使う
+export async function fetchInactiveSheetKeys() {
+  const { data, error } = await supabase.from('os_items').select('sheet_key').eq('active', false).not('sheet_key', 'is', null);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => r.sheet_key);
+}
+
 export async function saveSetting(key, value) {
   const { error } = await supabase.from('os_settings').upsert({ key, value });
   if (error) throw new Error(error.message);
