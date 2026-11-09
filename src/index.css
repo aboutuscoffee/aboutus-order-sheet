@@ -110,6 +110,14 @@ body {
 .osf-view-toggle { display: flex; gap: 4px; background: var(--accent-soft); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
 .osf-view-btn { flex: 1; border: none; background: transparent; padding: 7px 8px; font-size: 13px; font-weight: 500; color: var(--ink-soft); border-radius: 999px; }
 .osf-view-btn.active { background: var(--dark); color: #F2F4EC; }
+.osf-season-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.osf-season-label { font-size: 12px; color: var(--ink-soft); }
+.osf-season-toggle { display: flex; gap: 2px; background: var(--accent-soft); border-radius: 999px; padding: 2px; }
+.osf-season-btn { border: none; background: transparent; padding: 4px 12px; font-size: 12px; font-weight: 500; color: var(--ink-soft); border-radius: 999px; }
+.osf-season-btn.active { background: var(--accent); color: #fff; }
+.osf-season-count { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--warn); }
+.osf-only-below { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }
+.osf-item-memo { font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
 .osf-pending { margin-bottom: 18px; }
 .osf-pending-card { background: var(--warn-soft); border: 0.5px solid #E0BC9E; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
 .osf-pending-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }

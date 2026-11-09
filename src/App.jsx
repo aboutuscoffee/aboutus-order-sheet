@@ -3,6 +3,8 @@ import {
   fetchAll,
   fetchHistory,
   fetchProposals,
+  fetchSeason,
+  saveSeason,
   upsertProposal,
   deleteProposal,
   upsertSupplier,
@@ -30,6 +32,7 @@ export default function App() {
   const [locations, setLocations] = useState(null);
   const [history, setHistory] = useState(null);
   const [proposals, setProposals] = useState(null);
+  const [season, setSeason] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('order');
   const [toast, setToast] = useState(null);
@@ -51,13 +54,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchAll(), fetchHistory(), fetchProposals()])
-      .then(([{ suppliers, items, locations }, history, proposals]) => {
+    Promise.all([fetchAll(), fetchHistory(), fetchProposals(), fetchSeason()])
+      .then(([{ suppliers, items, locations }, history, proposals, season]) => {
         setSuppliers(suppliers);
         setItems(items);
         setLocations(locations);
         setHistory(history);
         setProposals(proposals);
+        setSeason(season);
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -113,6 +117,17 @@ export default function App() {
       showToast(e.message, true);
     }
   }, [showToast]);
+
+  const onChangeSeason = useCallback(async (next) => {
+    const prev = season;
+    setSeason(next);
+    try {
+      await saveSeason(next);
+    } catch (e) {
+      setSeason(prev);
+      showToast(e.message, true);
+    }
+  }, [season, showToast]);
 
   const saveProposal = useCallback(async (proposal) => {
     try {
@@ -232,7 +247,7 @@ export default function App() {
   if (error) {
     return <div id="osf-app"><div className="osf-body"><div className="osf-toast-err">読み込みエラー：{error}</div></div></div>;
   }
-  if (!suppliers || !items || !locations || !history || !proposals) {
+  if (!suppliers || !items || !locations || !history || !proposals || !season) {
     return <div id="osf-app"><div className="osf-loading">読み込み中…</div></div>;
   }
 
@@ -266,6 +281,8 @@ export default function App() {
             items={items}
             locations={locations}
             history={history}
+            season={season}
+            onChangeSeason={onChangeSeason}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
             onCompleteOrder={onCompleteOrder}

@@ -18,6 +18,17 @@ export async function fetchAll() {
   };
 }
 
+export async function fetchSeason() {
+  const { data, error } = await supabase.from('os_settings').select('value').eq('key', 'season').maybeSingle();
+  if (error) throw new Error(error.message);
+  return data?.value === 'busy' ? 'busy' : 'off';
+}
+
+export async function saveSeason(season) {
+  const { error } = await supabase.from('os_settings').upsert({ key: 'season', value: season });
+  if (error) throw new Error(error.message);
+}
+
 export async function fetchProposals() {
   const { data, error } = await supabase
     .from('os_proposals')

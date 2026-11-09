@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { yen, formatShortDate, isBelowReorderPoint } from '../../lib/format';
+import { yen, formatShortDate, isBelowReorderPoint, currentReorderPoint } from '../../lib/format';
 import RequestDialog from './RequestDialog';
 
 export default function SupplierCard({
   supplier,
   items,
   lastOrder,
+  season,
   onQtyChange,
   onCheckToggle,
   onCompleteOrder,
@@ -18,9 +19,9 @@ export default function SupplierCard({
   const { subtotal, hasOrder, belowCount } = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + it.unit_price * (it.order_qty || 0), 0);
     const hasOrder = items.some((it) => (it.order_qty || 0) > 0);
-    const belowCount = items.filter(isBelowReorderPoint).length;
+    const belowCount = items.filter((it) => isBelowReorderPoint(it, season)).length;
     return { subtotal, hasOrder, belowCount };
-  }, [items]);
+  }, [items, season]);
 
   const onOrderedCheck = async (e) => {
     if (!e.target.checked) return;
@@ -65,13 +66,14 @@ export default function SupplierCard({
               <td>
                 <div className="osf-item-name">
                   {it.name}
-                  {isBelowReorderPoint(it) && <span className="osf-reorder-badge">要発注</span>}
+                  {isBelowReorderPoint(it, season) && <span className="osf-reorder-badge">要発注</span>}
                 </div>
                 <div className="osf-item-price">
-                  {yen(it.unit_price)}
-                  {it.unit ? ` / ${it.unit}` : ''}
-                  {it.reorder_point != null ? `・目安 ${it.reorder_point}` : ''}
+                  {it.unit_price > 0 ? yen(it.unit_price) : ''}
+                  {it.unit ? `${it.unit_price > 0 ? ' / ' : ''}${it.unit}` : ''}
+                  {currentReorderPoint(it, season) != null ? `・目安 ${currentReorderPoint(it, season)}` : ''}
                 </div>
+                {it.item_note && <div className="osf-item-memo">{it.item_note}</div>}
               </td>
               <td>
                 <input
