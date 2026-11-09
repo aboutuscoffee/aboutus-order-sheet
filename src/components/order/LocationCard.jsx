@@ -1,6 +1,15 @@
 import { isBelowReorderPoint, currentReorderPoint } from '../../lib/format';
 
-export default function LocationCard({ title, items, supplierNames, season, onQtyChange, onCheckToggle }) {
+export default function LocationCard({
+  title,
+  items,
+  supplierNames,
+  locations,
+  season,
+  onQtyChange,
+  onCheckToggle,
+  onChangeLocation,
+}) {
   const belowCount = items.filter((it) => isBelowReorderPoint(it, season)).length;
 
   return (
@@ -35,6 +44,19 @@ export default function LocationCard({ title, items, supplierNames, season, onQt
                   {currentReorderPoint(it, season) != null ? `・目安 ${currentReorderPoint(it, season)}` : ''}
                 </div>
                 {it.item_note && <div className="osf-item-memo">{it.item_note}</div>}
+                <select
+                  className="osf-loc-select"
+                  aria-label={`${it.name}の置き場`}
+                  value={it.location_id ?? ''}
+                  onChange={(e) => onChangeLocation(it.id, e.target.value || null)}
+                >
+                  <option value="">置き場未設定</option>
+                  {locations.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
               </td>
               <td>
                 <input

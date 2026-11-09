@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import SupplierCard from './SupplierCard';
 import LocationCard from './LocationCard';
 import PendingDeliveries from './PendingDeliveries';
+import SheetImportDialog from './SheetImportDialog';
 import { CATEGORIES, SEASONS, UNCATEGORIZED } from '../../lib/constants';
+import { formatShortDate } from '../../lib/format';
 import { isBelowReorderPoint } from '../../lib/format';
 
 const VIEW_KEY = 'osf-order-view';
@@ -29,9 +31,13 @@ export default function OrderTab({
   onCompleteOrder,
   onRequestOrder,
   onToggleDelivered,
+  sheetSettings,
+  onApplySheetImport,
+  onChangeLocation,
 }) {
   const [view, setView] = useState(loadView);
   const [onlyBelow, setOnlyBelow] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const changeView = (next) => {
     setView(next);
@@ -102,6 +108,26 @@ export default function OrderTab({
         <span className="osf-season-count">{belowTotal > 0 ? `要発注 ${belowTotal}品` : '要発注なし'}</span>
       </div>
 
+      {sheetSettings.sheet_id && (
+        <div className="osf-import-bar">
+          <button className="osf-mini-btn" onClick={() => setImporting(true)}>
+            シートから在庫を取り込む
+          </button>
+          <span className="osf-import-last">
+            {sheetSettings.sheet_last_import ? `前回: ${formatShortDate(sheetSettings.sheet_last_import)}` : 'まだ取り込んでいません'}
+          </span>
+        </div>
+      )}
+      {importing && (
+        <SheetImportDialog
+          sheetId={sheetSettings.sheet_id}
+          items={items}
+          supplierNames={supplierNames}
+          onApply={onApplySheetImport}
+          onClose={() => setImporting(false)}
+        />
+      )}
+
       <div className="osf-view-toggle">
         <button className={'osf-view-btn' + (view === 'supplier' ? ' active' : '')} onClick={() => changeView('supplier')}>
           発注先別
@@ -146,9 +172,11 @@ export default function OrderTab({
               title={group.title}
               items={group.items}
               supplierNames={supplierNames}
+              locations={locations}
               season={season}
               onQtyChange={onQtyChange}
               onCheckToggle={onCheckToggle}
+              onChangeLocation={onChangeLocation}
             />
           ))
         ))}

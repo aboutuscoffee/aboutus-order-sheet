@@ -5,6 +5,8 @@ import {
   fetchProposals,
   fetchSeason,
   saveSeason,
+  fetchSheetSettings,
+  saveSetting,
   upsertProposal,
   deleteProposal,
   upsertSupplier,
@@ -33,6 +35,7 @@ export default function App() {
   const [history, setHistory] = useState(null);
   const [proposals, setProposals] = useState(null);
   const [season, setSeason] = useState(null);
+  const [sheetSettings, setSheetSettings] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('order');
   const [toast, setToast] = useState(null);
@@ -54,8 +57,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchAll(), fetchHistory(), fetchProposals(), fetchSeason()])
-      .then(([{ suppliers, items, locations }, history, proposals, season]) => {
+    Promise.all([fetchAll(), fetchHistory(), fetchProposals(), fetchSeason(), fetchSheetSettings()])
+      .then(([{ suppliers, items, locations }, history, proposals, season, sheetSettings]) => {
+        setSheetSettings(sheetSettings);
         setSuppliers(suppliers);
         setItems(items);
         setLocations(locations);
@@ -79,6 +83,11 @@ export default function App() {
     saveTimers.current[itemId + field] = setTimeout(() => {
       updateItemQty(itemId, { [field]: num }).catch((e) => showToast(e.message, true));
     }, QTY_SAVE_DELAY);
+  }, [showToast]);
+
+  const onChangeLocation = useCallback((itemId, locationId) => {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, location_id: locationId } : it)));
+    updateItemQty(itemId, { location_id: locationId }).catch((e) => showToast(e.message, true));
   }, [showToast]);
 
   const onCheckToggle = useCallback((itemId, checked) => {
@@ -116,6 +125,18 @@ export default function App() {
       setHistory((prev) => prev.map((h) => (h.id === entry.id ? entry : h)));
       showToast(e.message, true);
     }
+  }, [showToast]);
+
+  // シートから取り込んだ在庫を反映する。updates=在庫を書き換えるもの、recordOnly=すでに同じ値で記録だけ更新するもの
+  const onApplySheetImport = useCallback(async (updates, recordOnly) => {
+    for (const u of updates) await updateItemQty(u.id, { stock_qty: u.stock_qty, sheet_stock: u.sheet_stock });
+    for (const r of recordOnly) await updateItemQty(r.id, { sheet_stock: r.sheet_stock });
+    const now = new Date().toISOString();
+    await saveSetting('sheet_last_import', now);
+    const byId = new Map([...updates, ...recordOnly].map((u) => [u.id, u]));
+    setItems((prev) => prev.map((it) => (byId.has(it.id) ? { ...it, ...byId.get(it.id) } : it)));
+    setSheetSettings((prev) => ({ ...prev, sheet_last_import: now }));
+    showToast(updates.length > 0 ? `${updates.length}件の在庫を取り込みました` : '取り込みの記録を更新しました');
   }, [showToast]);
 
   const onChangeSeason = useCallback(async (next) => {
@@ -247,7 +268,7 @@ export default function App() {
   if (error) {
     return <div id="osf-app"><div className="osf-body"><div className="osf-toast-err">読み込みエラー：{error}</div></div></div>;
   }
-  if (!suppliers || !items || !locations || !history || !proposals || !season) {
+  if (!suppliers || !items || !locations || !history || !proposals || !season || !sheetSettings) {
     return <div id="osf-app"><div className="osf-loading">読み込み中…</div></div>;
   }
 
@@ -283,6 +304,9 @@ export default function App() {
             history={history}
             season={season}
             onChangeSeason={onChangeSeason}
+            sheetSettings={sheetSettings}
+            onApplySheetImport={onApplySheetImport}
+            onChangeLocation={onChangeLocation}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
             onCompleteOrder={onCompleteOrder}

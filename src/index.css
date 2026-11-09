@@ -117,7 +117,23 @@ body {
 .osf-season-btn.active { background: var(--accent); color: #fff; }
 .osf-season-count { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--warn); }
 .osf-only-below { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }
+.osf-loc-select { margin-top: 4px; width: auto; max-width: 100%; padding: 2px 6px; font-size: 11px; color: var(--ink-soft); }
 .osf-item-memo { font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
+.osf-import-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.osf-import-last { font-size: 11px; color: var(--ink-soft); }
+.osf-modal-wide { max-width: 440px; max-height: 85vh; overflow-y: auto; }
+.osf-modal-title { font-size: 15px; font-weight: 600; margin: 0 0 10px; }
+.osf-import-list { border: 0.5px solid var(--line); border-radius: 8px; margin-bottom: 12px; max-height: 42vh; overflow-y: auto; }
+.osf-import-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 0.5px solid var(--line); font-size: 13px; cursor: pointer; }
+.osf-import-row:last-child { border-bottom: none; }
+.osf-import-name { flex: 1; min-width: 0; }
+.osf-import-sub { display: block; font-size: 11px; color: var(--ink-soft); }
+.osf-import-warn { display: inline-block; margin-top: 2px; padding: 0 7px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-size: 10px; font-weight: 600; }
+.osf-import-values { white-space: nowrap; font-size: 12px; color: var(--ink-soft); }
+.osf-import-values strong { color: var(--accent); font-size: 13px; }
+.osf-import-new { font-size: 12px; margin-bottom: 12px; }
+.osf-import-new-list { margin-top: 6px; color: var(--ink-soft); line-height: 1.6; }
+.osf-import-new-note { margin-top: 4px; font-size: 11px; color: var(--ink-soft); }
 .osf-pending { margin-bottom: 18px; }
 .osf-pending-card { background: var(--warn-soft); border: 0.5px solid #E0BC9E; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
 .osf-pending-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }

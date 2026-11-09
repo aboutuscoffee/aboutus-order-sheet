@@ -24,6 +24,18 @@ export async function fetchSeason() {
   return data?.value === 'busy' ? 'busy' : 'off';
 }
 
+// 取り込み機能の設定（シートのID・最後に取り込んだ日時）。シートのIDは公開リポジトリに入れず、DBに置く
+export async function fetchSheetSettings() {
+  const { data, error } = await supabase.from('os_settings').select('key, value').in('key', ['sheet_id', 'sheet_last_import']);
+  if (error) throw new Error(error.message);
+  return Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
+}
+
+export async function saveSetting(key, value) {
+  const { error } = await supabase.from('os_settings').upsert({ key, value });
+  if (error) throw new Error(error.message);
+}
+
 export async function saveSeason(season) {
   const { error } = await supabase.from('os_settings').upsert({ key: 'season', value: season });
   if (error) throw new Error(error.message);
