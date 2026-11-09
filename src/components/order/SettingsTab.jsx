@@ -101,6 +101,7 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
   const [unitPrice, setUnitPrice] = useState(item.unit_price);
   const [supplierId, setSupplierId] = useState(item.supplier_id);
   const [locationId, setLocationId] = useState(item.location_id ?? null);
+  const [reorderPoint, setReorderPoint] = useState(item.reorder_point ?? '');
 
   const commit = (overrides = {}) => {
     const next = {
@@ -108,6 +109,7 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       name,
       unit,
       unit_price: Number(unitPrice) || 0,
+      reorder_point: reorderPoint === '' ? null : Number(reorderPoint),
       supplier_id: supplierId,
       location_id: locationId,
       ...overrides,
@@ -132,6 +134,17 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
           <label>単価</label>
           <input type="number" min="0" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} onBlur={() => commit()} />
         </div>
+      </div>
+      <div className="osf-form-row">
+        <label>発注目安</label>
+        <input
+          type="number"
+          min="0"
+          placeholder="未設定（在庫がこの数を下回ると要発注）"
+          value={reorderPoint}
+          onChange={(e) => setReorderPoint(e.target.value)}
+          onBlur={() => commit()}
+        />
       </div>
       <div className="osf-form-row">
         <label>発注先</label>
@@ -192,6 +205,7 @@ function AddItemBox({ suppliers, locations, onAdd }) {
   const [unitPrice, setUnitPrice] = useState('');
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? '');
   const [locationId, setLocationId] = useState(null);
+  const [reorderPoint, setReorderPoint] = useState('');
 
   const submit = () => {
     if (!name.trim() || !supplierId) return;
@@ -199,6 +213,7 @@ function AddItemBox({ suppliers, locations, onAdd }) {
       name: name.trim(),
       unit,
       unit_price: Number(unitPrice) || 0,
+      reorder_point: reorderPoint === '' ? null : Number(reorderPoint),
       supplier_id: supplierId,
       location_id: locationId,
       stock_qty: 0,
@@ -209,6 +224,7 @@ function AddItemBox({ suppliers, locations, onAdd }) {
     setName('');
     setUnit('');
     setUnitPrice('');
+    setReorderPoint('');
   };
 
   if (suppliers.length === 0) {
@@ -230,6 +246,16 @@ function AddItemBox({ suppliers, locations, onAdd }) {
           <label>単価</label>
           <input type="number" min="0" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
         </div>
+      </div>
+      <div className="osf-form-row">
+        <label>発注目安</label>
+        <input
+          type="number"
+          min="0"
+          placeholder="未設定（在庫がこの数を下回ると要発注）"
+          value={reorderPoint}
+          onChange={(e) => setReorderPoint(e.target.value)}
+        />
       </div>
       <div className="osf-form-row">
         <label>発注先</label>

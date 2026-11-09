@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { yen, formatShortDate } from '../../lib/format';
+import { yen, formatShortDate, isBelowReorderPoint } from '../../lib/format';
 import RequestDialog from './RequestDialog';
 
 export default function SupplierCard({
@@ -15,10 +15,11 @@ export default function SupplierCard({
   const [saving, setSaving] = useState(false);
   const [requesting, setRequesting] = useState(false);
 
-  const { subtotal, hasOrder } = useMemo(() => {
+  const { subtotal, hasOrder, belowCount } = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + it.unit_price * (it.order_qty || 0), 0);
     const hasOrder = items.some((it) => (it.order_qty || 0) > 0);
-    return { subtotal, hasOrder };
+    const belowCount = items.filter(isBelowReorderPoint).length;
+    return { subtotal, hasOrder, belowCount };
   }, [items]);
 
   const onOrderedCheck = async (e) => {
@@ -43,9 +44,10 @@ export default function SupplierCard({
           <div className="osf-supplier-name">{supplier.name}</div>
           {supplier.note && <div className="osf-supplier-note">{supplier.note}</div>}
         </div>
-        {threshold != null && (
-          <div className="osf-supplier-note">送料無料 {yen(threshold)}〜</div>
-        )}
+        <div className="osf-head-right">
+          {belowCount > 0 && <span className="osf-reorder-badge">要発注 {belowCount}品</span>}
+          {threshold != null && <div className="osf-supplier-note">送料無料 {yen(threshold)}〜</div>}
+        </div>
       </div>
       <table className="osf-item-table">
         <thead>
@@ -61,10 +63,14 @@ export default function SupplierCard({
           {items.map((it) => (
             <tr key={it.id}>
               <td>
-                <div className="osf-item-name">{it.name}</div>
+                <div className="osf-item-name">
+                  {it.name}
+                  {isBelowReorderPoint(it) && <span className="osf-reorder-badge">要発注</span>}
+                </div>
                 <div className="osf-item-price">
                   {yen(it.unit_price)}
                   {it.unit ? ` / ${it.unit}` : ''}
+                  {it.reorder_point != null ? `・目安 ${it.reorder_point}` : ''}
                 </div>
               </td>
               <td>

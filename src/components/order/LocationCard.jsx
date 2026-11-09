@@ -1,9 +1,16 @@
+import { isBelowReorderPoint } from '../../lib/format';
+
 export default function LocationCard({ title, items, supplierNames, onQtyChange, onCheckToggle }) {
+  const belowCount = items.filter(isBelowReorderPoint).length;
+
   return (
     <div className="osf-supplier-card">
       <div className="osf-supplier-head">
         <div className="osf-supplier-name">{title}</div>
-        <div className="osf-supplier-note">{items.length}品目</div>
+        <div className="osf-head-right">
+          {belowCount > 0 && <span className="osf-reorder-badge">要発注 {belowCount}品</span>}
+          <div className="osf-supplier-note">{items.length}品目</div>
+        </div>
       </div>
       <table className="osf-item-table">
         <thead>
@@ -18,10 +25,14 @@ export default function LocationCard({ title, items, supplierNames, onQtyChange,
           {items.map((it) => (
             <tr key={it.id}>
               <td>
-                <div className="osf-item-name">{it.name}</div>
+                <div className="osf-item-name">
+                  {it.name}
+                  {isBelowReorderPoint(it) && <span className="osf-reorder-badge">要発注</span>}
+                </div>
                 <div className="osf-item-price">
                   {supplierNames[it.supplier_id]}
                   {it.unit ? ` / ${it.unit}` : ''}
+                  {it.reorder_point != null ? `・目安 ${it.reorder_point}` : ''}
                 </div>
               </td>
               <td>
