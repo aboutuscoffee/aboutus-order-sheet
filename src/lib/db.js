@@ -18,6 +18,26 @@ export async function fetchAll() {
   };
 }
 
+export async function fetchProposals() {
+  const { data, error } = await supabase
+    .from('os_proposals')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function upsertProposal(proposal) {
+  const { data, error } = await supabase.from('os_proposals').upsert(proposal).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteProposal(id) {
+  const { error } = await supabase.from('os_proposals').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 export async function upsertLocation(location) {
   const { data, error } = await supabase.from('os_locations').upsert(location).select().single();
   if (error) throw new Error(error.message);

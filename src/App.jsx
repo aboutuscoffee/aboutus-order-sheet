@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchAll,
   fetchHistory,
+  fetchProposals,
+  upsertProposal,
+  deleteProposal,
   upsertSupplier,
   deleteSupplier,
   upsertItem,
@@ -16,6 +19,7 @@ import { requestOrder } from './lib/todo';
 import OrderTab from './components/order/OrderTab';
 import SettingsTab from './components/order/SettingsTab';
 import HistoryTab from './components/order/HistoryTab';
+import ProposalsTab from './components/order/ProposalsTab';
 import ConfirmDialog from './components/order/ConfirmDialog';
 
 const QTY_SAVE_DELAY = 500;
@@ -25,6 +29,7 @@ export default function App() {
   const [items, setItems] = useState(null);
   const [locations, setLocations] = useState(null);
   const [history, setHistory] = useState(null);
+  const [proposals, setProposals] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('order');
   const [toast, setToast] = useState(null);
@@ -46,12 +51,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchAll(), fetchHistory()])
-      .then(([{ suppliers, items, locations }, history]) => {
+    Promise.all([fetchAll(), fetchHistory(), fetchProposals()])
+      .then(([{ suppliers, items, locations }, history, proposals]) => {
         setSuppliers(suppliers);
         setItems(items);
         setLocations(locations);
         setHistory(history);
+        setProposals(proposals);
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -107,6 +113,48 @@ export default function App() {
       showToast(e.message, true);
     }
   }, [showToast]);
+
+  const saveProposal = useCallback(async (proposal) => {
+    try {
+      const saved = await upsertProposal(proposal);
+      setProposals((prev) => {
+        const exists = prev.some((p) => p.id === saved.id);
+        return exists ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev];
+      });
+      return saved;
+    } catch (e) {
+      showToast(e.message, true);
+      return null;
+    }
+  }, [showToast]);
+
+  const onSubmitProposal = useCallback(async (fields) => {
+    if (await saveProposal(fields)) showToast('検討をお願いしました');
+  }, [saveProposal, showToast]);
+
+  const onDecideProposal = useCallback((proposal, status, decidedBy, comment) => {
+    saveProposal({
+      ...proposal,
+      status,
+      decided_by: decidedBy,
+      decision_comment: comment,
+      decided_at: new Date().toISOString(),
+    });
+  }, [saveProposal]);
+
+  const onReopenProposal = useCallback((proposal) => {
+    saveProposal({ ...proposal, status: 'pending', decided_by: null, decision_comment: null, decided_at: null });
+  }, [saveProposal]);
+
+  const onDeleteProposal = useCallback(async (id) => {
+    if (!(await askConfirm('この検討内容を削除しますか？', '削除する'))) return;
+    try {
+      await deleteProposal(id);
+      setProposals((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      showToast(e.message, true);
+    }
+  }, [showToast, askConfirm]);
 
   const onSaveSupplier = useCallback(async (supplier) => {
     try {
@@ -184,9 +232,11 @@ export default function App() {
   if (error) {
     return <div id="osf-app"><div className="osf-body"><div className="osf-toast-err">読み込みエラー：{error}</div></div></div>;
   }
-  if (!suppliers || !items || !locations || !history) {
+  if (!suppliers || !items || !locations || !history || !proposals) {
     return <div id="osf-app"><div className="osf-loading">読み込み中…</div></div>;
   }
+
+  const openProposalCount = proposals.filter((p) => p.status === 'pending' || p.status === 'on_hold').length;
 
   return (
     <div id="osf-app">
@@ -200,6 +250,9 @@ export default function App() {
         </button>
         <button className={'osf-tab' + (activeTab === 'history' ? ' active' : '')} onClick={() => changeTab('history')}>
           履歴
+        </button>
+        <button className={'osf-tab' + (activeTab === 'proposals' ? ' active' : '')} onClick={() => changeTab('proposals')}>
+          検討{openProposalCount > 0 ? `（${openProposalCount}）` : ''}
         </button>
         <button className={'osf-tab' + (activeTab === 'settings' ? ' active' : '')} onClick={() => changeTab('settings')}>
           設定
@@ -221,6 +274,17 @@ export default function App() {
           />
         )}
         {activeTab === 'history' && <HistoryTab history={history} />}
+        {activeTab === 'proposals' && (
+          <ProposalsTab
+            proposals={proposals}
+            suppliers={suppliers}
+            items={items}
+            onSubmit={onSubmitProposal}
+            onDecide={onDecideProposal}
+            onReopen={onReopenProposal}
+            onDelete={onDeleteProposal}
+          />
+        )}
         {activeTab === 'settings' && (
           <SettingsTab
             suppliers={suppliers}

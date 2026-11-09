@@ -21,6 +21,18 @@ export async function fetchStaff() {
   return data ?? [];
 }
 
+// 判断者の選択肢（GM・オーナー）。Todoアプリの staff テーブルを読むだけで、書き込みはしない
+export async function fetchDeciders() {
+  const { data, error } = await supabase
+    .from('staff')
+    .select('key, name, role')
+    .eq('is_active', true)
+    .in('role', ['GM', 'owner'])
+    .order('name', { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function requestOrder({ supplier, items, note, fromStaff, toStaff }) {
   const ordered = items.filter((it) => (it.order_qty || 0) > 0);
   const total = ordered.reduce((sum, it) => sum + it.unit_price * it.order_qty, 0);

@@ -125,6 +125,24 @@ body {
 .osf-history-badge { margin-left: 8px; font-size: 10px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
 .osf-history-badge.osf-done { background: var(--good-soft); color: var(--good); }
 
+/* Proposals (検討) */
+.osf-proposal { background: var(--surface); border: 0.5px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.osf-proposal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.osf-proposal-title { font-size: 14px; font-weight: 600; }
+.osf-proposal-status { flex-shrink: 0; font-size: 10px; font-weight: 600; padding: 1px 9px; border-radius: 999px; }
+.osf-st-pending { background: var(--warn-soft); color: var(--warn); }
+.osf-st-hold { background: #ECEBE3; color: var(--ink-soft); }
+.osf-st-ok { background: var(--good-soft); color: var(--good); }
+.osf-st-ng { background: #F1E4E0; color: #9C4A3C; }
+.osf-proposal-meta { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+.osf-proposal-reason { font-size: 13px; margin-top: 8px; white-space: pre-wrap; line-height: 1.6; }
+.osf-proposal-decision { font-size: 12px; margin-top: 8px; padding: 6px 8px; background: var(--accent-soft); border-radius: 6px; }
+.osf-proposal-actions { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--line); }
+.osf-proposal-actions > input { margin-bottom: 8px; }
+.osf-proposal-buttons { display: flex; gap: 8px; }
+.osf-proposal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.osf-tab { padding-left: 4px; padding-right: 4px; }
+
 /* Confirm modal */
 .osf-modal-backdrop { position: fixed; inset: 0; background: rgba(42, 46, 36, 0.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
 .osf-modal { background: var(--surface); border-radius: 12px; padding: 20px; max-width: 320px; width: 100%; }
