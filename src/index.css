@@ -188,3 +188,47 @@ body {
 .osf-loc-chip { display: inline-flex; align-items: center; gap: 2px; padding: 1px 4px 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; }
 .osf-loc-chip button { border: none; background: transparent; color: var(--ink-soft); font-size: 12px; line-height: 1; padding: 0 3px; }
 .osf-loc-add { color: var(--accent); }
+
+/* Per-location stock / supplier sub-headers */
+.osf-stock-breakdown { margin-top: 2px; font-size: 11px; color: var(--accent); }
+.osf-supplier-subhead td { padding: 6px 10px; background: #F3F5EC; border-bottom: 0.5px solid var(--line); font-size: 12px; }
+.osf-subhead-name { font-weight: 600; color: var(--dark); }
+.osf-qty-input:disabled { background: #F4F4EE; color: var(--ink-soft); }
+
+/* ===== スマホ幅: 商品1行を「商品名（上）＋在庫・確認・発注数（下）」に組み替える =====
+   表のままだと商品名の列が幅を取り、数字の入力欄が20px幅まで潰れていた */
+@media (max-width: 560px) {
+  body { padding: 8px; }
+  .osf-body { padding: 12px 10px 20px; }
+  .osf-item-table, .osf-item-table tbody { display: block; }
+  .osf-item-table thead { display: none; }
+  .osf-item-table tbody tr { display: block; }
+  .osf-item-table tbody tr:not(.osf-group-head):not(.osf-supplier-subhead) {
+    display: grid;
+    grid-template-columns: 1fr 52px 1fr;
+    column-gap: 10px;
+    align-items: end;
+    padding: 10px 12px 12px;
+    border-bottom: 0.5px solid var(--line);
+  }
+  .osf-item-table tbody tr:not(.osf-group-head):not(.osf-supplier-subhead) > td { padding: 0; border-bottom: none; }
+  .osf-item-table tbody tr > td:first-child { grid-column: 1 / -1; margin-bottom: 8px; }
+  /* 表の見出しを隠した代わりに、各欄の上に小さなラベルを付ける（在庫=2列目、確認=3列目、発注数=4列目、小計=5列目） */
+  .osf-item-table tbody tr > td:nth-child(2)::before,
+  .osf-item-table tbody tr > td:nth-child(3)::before,
+  .osf-item-table tbody tr > td:nth-child(4)::before { display: block; font-size: 10px; color: var(--ink-soft); margin-bottom: 3px; text-align: left; }
+  .osf-item-table tbody tr > td:nth-child(2)::before { content: '在庫'; }
+  .osf-item-table tbody tr > td:nth-child(3)::before { content: '確認'; text-align: center; }
+  .osf-item-table tbody tr > td:nth-child(4)::before { content: '発注数'; }
+  .osf-item-table tbody tr > td:nth-child(5) { grid-column: 1 / -1; margin-top: 6px; text-align: right !important; }
+  .osf-item-table tbody tr > td:nth-child(5)::before { content: '小計 '; font-size: 10px; color: var(--ink-soft); font-weight: 400; }
+  .osf-item-table td.osf-item-subtotal:not(.osf-has-qty) { display: none; }
+  /* 数字の入力欄: 幅いっぱい・大きめの文字（16px未満だとiPhoneで入力時に画面が拡大される） */
+  #osf-app .osf-qty-input { width: 100%; min-width: 0; height: 40px; padding: 4px 10px; font-size: 16px; text-align: right; }
+  .osf-check-input { width: 26px; height: 26px; }
+  .osf-item-table tbody tr > td:nth-child(3) { text-align: center; }
+  .osf-group-head td, .osf-supplier-subhead td { display: block; }
+  .osf-supplier-head, .osf-supplier-foot { padding-left: 12px; padding-right: 12px; }
+  .osf-order-check-row { flex-wrap: wrap; }
+  .osf-note-input { min-width: 0; }
+}
