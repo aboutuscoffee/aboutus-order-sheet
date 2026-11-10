@@ -20,6 +20,7 @@ import {
   completeOrder,
 } from './lib/db';
 import { requestOrder } from './lib/todo';
+import { redistribute, stocksByLocation, sumStocks } from './lib/stocks';
 import OrderTab from './components/order/OrderTab';
 import SettingsTab from './components/order/SettingsTab';
 import HistoryTab from './components/order/HistoryTab';
@@ -41,7 +42,10 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
   const saveTimers = useRef({});
+  const itemsRef = useRef(null); // 保存する内容を最新の状態から作るため
   const confirmResolver = useRef(null);
+
+  itemsRef.current = items;
 
   const askConfirm = useCallback((message, okLabel, options = {}) => {
     return new Promise((resolve) => {
@@ -85,10 +89,29 @@ export default function App() {
     }, QTY_SAVE_DELAY);
   }, [showToast]);
 
-  // patch は { location_id } または { extra_location_ids }（変更した項目だけ）
+  // patch は { location_id } または { extra_location_ids }（変更した項目だけ）。
+  // 置き場が2か所以上になる/なくなるときは、在庫の内訳（location_stocks）も合計を保ったまま振り分ける
   const onChangeLocation = useCallback((itemId, patch) => {
-    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, ...patch } : it)));
-    updateItemQty(itemId, patch).catch((e) => showToast(e.message, true));
+    const item = itemsRef.current?.find((it) => it.id === itemId);
+    if (!item) return;
+    const full = { ...patch, ...redistribute(item, patch) };
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, ...full } : it)));
+    updateItemQty(itemId, full).catch((e) => showToast(e.message, true));
+  }, [showToast]);
+
+  // 2か所以上に置き場がある商品の、特定の置き場の在庫を入力したとき。stock_qty はその合計にする
+  const onLocationStockChange = useCallback((itemId, locationId, value) => {
+    const item = itemsRef.current?.find((it) => it.id === itemId);
+    if (!item) return;
+    const num = value === '' ? 0 : Math.max(0, Number(value));
+    const map = { ...stocksByLocation(item), [locationId]: num };
+    const full = { location_stocks: map, stock_qty: sumStocks(map) };
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, ...full } : it)));
+
+    clearTimeout(saveTimers.current[`${itemId}:locstock`]);
+    saveTimers.current[`${itemId}:locstock`] = setTimeout(() => {
+      updateItemQty(itemId, full).catch((e) => showToast(e.message, true));
+    }, QTY_SAVE_DELAY);
   }, [showToast]);
 
   const onCheckToggle = useCallback((itemId, checked) => {
@@ -130,7 +153,13 @@ export default function App() {
 
   // シートから取り込んだ在庫を反映する。updates=在庫を書き換えるもの、recordOnly=すでに同じ値で記録だけ更新するもの
   const onApplySheetImport = useCallback(async (updates, recordOnly) => {
-    for (const u of updates) await updateItemQty(u.id, { stock_qty: u.stock_qty, sheet_stock: u.sheet_stock });
+    for (const u of updates) {
+      await updateItemQty(u.id, {
+        stock_qty: u.stock_qty,
+        sheet_stock: u.sheet_stock,
+        ...(u.location_stocks ? { location_stocks: u.location_stocks } : {}),
+      });
+    }
     for (const r of recordOnly) await updateItemQty(r.id, { sheet_stock: r.sheet_stock });
     const now = new Date().toISOString();
     await saveSetting('sheet_last_import', now);
@@ -308,6 +337,7 @@ export default function App() {
             sheetSettings={sheetSettings}
             onApplySheetImport={onApplySheetImport}
             onChangeLocation={onChangeLocation}
+            onLocationStockChange={onLocationStockChange}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
             onCompleteOrder={onCompleteOrder}

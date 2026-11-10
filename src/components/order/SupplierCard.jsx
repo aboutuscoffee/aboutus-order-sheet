@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import { yen, formatShortDate, isBelowReorderPoint, currentReorderPoint } from '../../lib/format';
 import RequestDialog from './RequestDialog';
 import { GroupedRows } from './ItemGroups';
+import { isMultiLocation, stocksByLocation } from '../../lib/stocks';
 
 export default function SupplierCard({
   supplier,
+  locations,
   items,
   lastOrder,
   season,
@@ -51,6 +53,14 @@ export default function SupplierCard({
           {it.unit ? `${it.unit_price > 0 ? ' / ' : ''}${it.unit}` : ''}
           {currentReorderPoint(it, season) != null ? `・目安 ${currentReorderPoint(it, season)}` : ''}
         </div>
+        {isMultiLocation(it) && (
+          <div className="osf-stock-breakdown">
+            置き場ごとの在庫:{' '}
+            {Object.entries(stocksByLocation(it))
+              .map(([id, qty]) => `${locations.find((l) => l.id === id)?.name ?? '?'} ${qty}`)
+              .join(' / ')}
+          </div>
+        )}
         {it.item_note && <div className="osf-item-memo">{it.item_note}</div>}
       </td>
       <td>
@@ -59,6 +69,8 @@ export default function SupplierCard({
           type="number"
           min="0"
           value={it.stock_qty}
+          disabled={isMultiLocation(it)}
+          title={isMultiLocation(it) ? '置き場が複数あるので、置き場別の表示で置き場ごとに入力します（これは合計）' : undefined}
           onChange={(e) => onQtyChange(it.id, 'stock_qty', e.target.value)}
         />
       </td>

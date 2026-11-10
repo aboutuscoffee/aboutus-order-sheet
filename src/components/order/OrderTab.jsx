@@ -34,6 +34,7 @@ export default function OrderTab({
   sheetSettings,
   onApplySheetImport,
   onChangeLocation,
+  onLocationStockChange,
 }) {
   const [view, setView] = useState(loadView);
   const [onlyBelow, setOnlyBelow] = useState(false);
@@ -154,6 +155,7 @@ export default function OrderTab({
           <SupplierCard
             key={supplier.id}
             supplier={supplier}
+            locations={locations}
             items={items.filter((it) => it.supplier_id === supplier.id)}
             lastOrder={lastOrderBySupplier[supplier.id]}
             season={season}
@@ -172,6 +174,8 @@ export default function OrderTab({
             <LocationCard
               key={`${view}:${group.id}`}
               cardId={`${view}:${group.id}`}
+              locationId={view === 'location' && group.id !== 'none' ? group.id : undefined}
+              suppliers={view === 'location' ? suppliers : undefined}
               title={group.title}
               items={group.items}
               supplierNames={supplierNames}
@@ -180,6 +184,7 @@ export default function OrderTab({
               onQtyChange={onQtyChange}
               onCheckToggle={onCheckToggle}
               onChangeLocation={onChangeLocation}
+              onLocationStockChange={onLocationStockChange}
             />
           ))
         ))}

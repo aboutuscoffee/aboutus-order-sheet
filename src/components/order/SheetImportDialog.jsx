@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchSheetStocks } from '../../lib/sheetImport';
 import { fetchInactiveSheetKeys } from '../../lib/db';
+import { idsOf, isMultiLocation } from '../../lib/stocks';
 
 export default function SheetImportDialog({ sheetId, items, supplierNames, onApply, onClose }) {
   const [rows, setRows] = useState(null); // シートの行 Map
@@ -40,14 +41,14 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
       }
       // 前回取り込み後にアプリ側でも在庫を変えている（スタッフが入力した）場合は注意を出す
       const appEdited = it.stock_qty !== (it.sheet_stock ?? 0);
-      candidates.push({ item: it, sheetValue: sv, appEdited });
+      candidates.push({ item: it, sheetValue: sv, appEdited, multi: isMultiLocation(it) });
     }
     const newRows = [...rows.values()].filter((r) => !keys.has(r.key));
     return { candidates, silent, newRows, linked };
   }, [rows, items, inactiveKeys]);
 
   useEffect(() => {
-    setChecked(Object.fromEntries(candidates.map((c) => [c.item.id, !c.appEdited])));
+    setChecked(Object.fromEntries(candidates.map((c) => [c.item.id, !c.appEdited && !c.multi])));
   }, [candidates]);
 
   const selected = candidates.filter((c) => checked[c.item.id]);
@@ -57,7 +58,13 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
     setApplyError(null);
     try {
       await onApply(
-        selected.map((c) => ({ id: c.item.id, stock_qty: c.sheetValue, sheet_stock: c.sheetValue })),
+        selected.map((c) => ({
+          id: c.item.id,
+          stock_qty: c.sheetValue,
+          sheet_stock: c.sheetValue,
+          // 置き場が複数ある商品は、シートの合計をメインの置き場に入れ、他の置き場は0にする
+          ...(c.multi ? { location_stocks: Object.fromEntries(idsOf(c.item).map((id, i) => [id, i === 0 ? c.sheetValue : 0])) } : {}),
+        })),
         silent
       );
       onClose();
@@ -97,6 +104,7 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
                       {c.item.name}
                       <span className="osf-import-sub">{supplierNames[c.item.supplier_id]}</span>
                       {c.appEdited && <span className="osf-import-warn">アプリでも変更あり</span>}
+                      {c.multi && <span className="osf-import-warn">置き場が複数（内訳はメインの置き場にまとめます）</span>}
                     </span>
                     <span className="osf-import-values">
                       {c.item.stock_qty} → <strong>{c.sheetValue}</strong>
