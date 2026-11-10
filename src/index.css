@@ -246,3 +246,12 @@ body {
   #osf-app input, #osf-app select, #osf-app textarea { font-size: 16px; }
   .osf-body { padding-left: 8px; padding-right: 8px; }
 }
+
+/* ---- ファイルのタブのように選ぶ（発注先・置き場）---- */
+.osf-ftabs { display: flex; gap: 2px; overflow-x: auto; margin: 0 0 -1px; padding: 0 2px; position: sticky; top: 0; z-index: 12; background: var(--page); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.osf-ftabs::-webkit-scrollbar { display: none; }
+.osf-ftab { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; padding: 9px 14px 8px; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0; background: #EAE3D8; color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
+.osf-ftab.active { background: var(--surface); border-color: var(--line-strong); color: var(--ink); font-weight: 600; position: relative; top: 1px; padding-bottom: 9px; }
+.osf-ftab-below { min-width: 17px; height: 17px; padding: 0 5px; border-radius: 999px; background: var(--warn); color: #fff; font-size: 10px; font-weight: 700; line-height: 17px; text-align: center; }
+.osf-ftab-ordering { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.osf-ftabs + .osf-card { border-top-left-radius: 0; margin-top: 0; }

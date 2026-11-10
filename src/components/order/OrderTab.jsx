@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import SupplierCard from './SupplierCard';
 import LocationCard from './LocationCard';
 import PendingDeliveries from './PendingDeliveries';
+import FolderTabs from './FolderTabs';
 import { SEASONS } from '../../lib/constants';
 import { isBelowReorderPoint } from '../../lib/format';
 
@@ -14,6 +15,25 @@ function loadView() {
     return VIEWS.includes(saved) ? saved : 'supplier';
   } catch {
     return 'supplier';
+  }
+}
+
+const SEL_SUPPLIER_KEY = 'osf-selected-supplier';
+const SEL_LOCATION_KEY = 'osf-selected-location';
+
+function loadPref(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function savePref(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // 記憶できなくても切り替えは動くので無視する
   }
 }
 
@@ -35,6 +55,8 @@ export default function OrderTab({
 }) {
   const [view, setView] = useState(loadView);
   const [onlyBelow, setOnlyBelow] = useState(false);
+  const [selSupplier, setSelSupplier] = useState(() => loadPref(SEL_SUPPLIER_KEY));
+  const [selLocation, setSelLocation] = useState(() => loadPref(SEL_LOCATION_KEY));
 
   const changeView = (next) => {
     setView(next);
@@ -73,6 +95,18 @@ export default function OrderTab({
     groups.push({ id: 'none', title: '置き場未設定', items: visibleItems.filter((it) => !idsOf(it).some((id) => known.has(id))) });
     return groups.filter((g) => g.items.length > 0);
   }, [locations, visibleItems]);
+
+  const countsOf = (list) => ({
+    below: list.filter((it) => isBelowReorderPoint(it, season)).length,
+    ordering: list.filter((it) => (it.order_qty || 0) > 0).length,
+  });
+
+  const supplierTabs = suppliers.map((s) => ({ id: s.id, label: s.name, ...countsOf(items.filter((it) => it.supplier_id === s.id)) }));
+  const locationTabs = locationGroups.map((g) => ({ id: g.id, label: g.title, ...countsOf(g.items) }));
+
+  // 選んでいるものが見つからない（削除された・絞り込みで空になった）ときは、先頭を表示する
+  const activeSupplier = suppliers.find((s) => s.id === selSupplier) ?? suppliers[0];
+  const activeGroup = locationGroups.find((g) => g.id === selLocation) ?? locationGroups[0];
 
   if (suppliers.length === 0) {
     return <div className="osf-empty">発注先が未登録です。「設定」タブから追加してください。</div>;
@@ -113,14 +147,23 @@ export default function OrderTab({
         </label>
       )}
 
-      {view === 'supplier' &&
-        suppliers.map((supplier) => (
+      {view === 'supplier' && (
+        <>
+          <FolderTabs
+            ariaLabel="発注先"
+            tabs={supplierTabs}
+            activeId={activeSupplier.id}
+            onSelect={(id) => {
+              setSelSupplier(id);
+              savePref(SEL_SUPPLIER_KEY, id);
+            }}
+          />
           <SupplierCard
-            key={supplier.id}
-            supplier={supplier}
+            key={activeSupplier.id}
+            supplier={activeSupplier}
             locations={locations}
-            items={items.filter((it) => it.supplier_id === supplier.id)}
-            lastOrder={lastOrderBySupplier[supplier.id]}
+            items={items.filter((it) => it.supplier_id === activeSupplier.id)}
+            lastOrder={lastOrderBySupplier[activeSupplier.id]}
             season={season}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
@@ -129,20 +172,30 @@ export default function OrderTab({
             onCompleteOrder={onCompleteOrder}
             onRequestOrder={onRequestOrder}
           />
-        ))}
+        </>
+      )}
 
       {view === 'location' &&
         (locationGroups.length === 0 ? (
           <div className="osf-empty">{onlyBelow ? '要発注のものはありません。' : '商品がありません。'}</div>
         ) : (
-          locationGroups.map((group) => (
+          <>
+            <FolderTabs
+              ariaLabel="置き場"
+              tabs={locationTabs}
+              activeId={activeGroup.id}
+              onSelect={(id) => {
+                setSelLocation(id);
+                savePref(SEL_LOCATION_KEY, id);
+              }}
+            />
             <LocationCard
-              key={group.id}
-              cardId={`location:${group.id}`}
-              locationId={group.id !== 'none' ? group.id : undefined}
+              key={activeGroup.id}
+              cardId={`location:${activeGroup.id}`}
+              locationId={activeGroup.id !== 'none' ? activeGroup.id : undefined}
               suppliers={suppliers}
-              title={group.title}
-              items={group.items}
+              title={activeGroup.title}
+              items={activeGroup.items}
               supplierNames={supplierNames}
               locations={locations}
               season={season}
@@ -152,7 +205,7 @@ export default function OrderTab({
               onUnitChange={onUnitChange}
               onChangeLocation={onChangeLocation}
             />
-          ))
+          </>
         ))}
     </div>
   );
