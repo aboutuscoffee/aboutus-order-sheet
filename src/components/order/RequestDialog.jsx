@@ -18,6 +18,7 @@ export default function RequestDialog({ supplier, onSend, onClose }) {
   const [toKey, setToKey] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(null);
+  const [note, setNote] = useState('');
 
   useEffect(() => {
     fetchStaff()
@@ -33,7 +34,7 @@ export default function RequestDialog({ supplier, onSend, onClose }) {
     setSending(true);
     setSendError(null);
     try {
-      await onSend(fromStaff, toStaff);
+      await onSend(fromStaff, toStaff, note.trim());
       try {
         localStorage.setItem(FROM_KEY, fromKey);
       } catch {
@@ -52,7 +53,7 @@ export default function RequestDialog({ supplier, onSend, onClose }) {
         <p className="osf-modal-text">
           {supplier.name} の発注を、Todoアプリの依頼タスクとしてお願いします。
         </p>
-        {loadError && <div className="osf-toast-err">スタッフ一覧を読み込めませんでした：{loadError}</div>}
+        {loadError && <div className="osf-inline-err">スタッフ一覧を読み込めませんでした：{loadError}</div>}
         {!staff && !loadError && <div className="osf-loading">読み込み中…</div>}
         {staff && (
           <>
@@ -82,7 +83,13 @@ export default function RequestDialog({ supplier, onSend, onClose }) {
             </div>
           </>
         )}
-        {sendError && <div className="osf-toast-err">{sendError}</div>}
+        {staff && (
+          <div className="osf-form-row">
+            <label>備考</label>
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="任意（例: 急ぎです）" />
+          </div>
+        )}
+        {sendError && <div className="osf-inline-err">{sendError}</div>}
         <div className="osf-modal-actions">
           <button className="osf-mini-btn" onClick={onClose} disabled={sending}>
             キャンセル

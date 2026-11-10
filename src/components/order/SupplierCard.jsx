@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { yen, formatShortDate, isBelowReorderPoint, currentReorderPoint } from '../../lib/format';
+import { yen, formatShortDate, isBelowReorderPoint } from '../../lib/format';
 import RequestDialog from './RequestDialog';
+import ItemRow from './ItemRow';
 import { GroupedRows } from './ItemGroups';
-import { isMultiLocation, stocksByLocation } from '../../lib/stocks';
 
+// 発注先ごとのカード。商品行の下に「合計・送料無料ライン・お願い・発注済み」のバーがつく
+// （カードが画面に見えている間は、バーは下のタブの上に固定される）
 export default function SupplierCard({
   supplier,
   locations,
@@ -12,12 +14,13 @@ export default function SupplierCard({
   season,
   onQtyChange,
   onCheckToggle,
+  onUnitChange,
+  onChangeLocation,
   onCompleteOrder,
   onRequestOrder,
 }) {
-  const [note, setNote] = useState('');
-  const [saving, setSaving] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const { subtotal, hasOrder, belowCount } = useMemo(() => {
     const subtotal = items.reduce((sum, it) => sum + it.unit_price * (it.order_qty || 0), 0);
@@ -26,154 +29,80 @@ export default function SupplierCard({
     return { subtotal, hasOrder, belowCount };
   }, [items, season]);
 
-  const onOrderedCheck = async (e) => {
-    if (!e.target.checked) return;
+  const threshold = supplier.free_shipping_threshold;
+  const reached = threshold != null && subtotal >= threshold;
+  const pct = threshold != null ? Math.min(100, (subtotal / threshold) * 100) : 0;
+
+  const complete = async () => {
     setSaving(true);
     try {
-      await onCompleteOrder(supplier, items, note);
-      setNote('');
+      await onCompleteOrder(supplier, items);
     } finally {
       setSaving(false);
     }
   };
 
-  const threshold = supplier.free_shipping_threshold;
-  const reached = threshold != null && subtotal >= threshold;
-  const pct = threshold != null ? Math.min(100, (subtotal / threshold) * 100) : 0;
-
   const renderRow = (it) => (
-    <tr key={it.id}>
-      <td>
-        <div className="osf-item-name">
-          {it.name}
-          {isBelowReorderPoint(it, season) && <span className="osf-reorder-badge">要発注</span>}
-        </div>
-        <div className="osf-item-price">
-          {it.unit_price > 0 ? yen(it.unit_price) : ''}
-          {it.unit ? `${it.unit_price > 0 ? ' / ' : ''}${it.unit}` : ''}
-          {currentReorderPoint(it, season) != null ? `・目安 ${currentReorderPoint(it, season)}` : ''}
-        </div>
-        {isMultiLocation(it) && (
-          <div className="osf-stock-breakdown">
-            置き場ごとの在庫:{' '}
-            {Object.entries(stocksByLocation(it))
-              .map(([id, qty]) => `${locations.find((l) => l.id === id)?.name ?? '?'} ${qty}`)
-              .join(' / ')}
-          </div>
-        )}
-        {it.item_note && <div className="osf-item-memo">{it.item_note}</div>}
-      </td>
-      <td>
-        <input
-          className="osf-qty-input"
-          type="number"
-          min="0"
-          value={it.stock_qty}
-          disabled={isMultiLocation(it)}
-          title={isMultiLocation(it) ? '置き場が複数あるので、置き場別の表示で置き場ごとに入力します（これは合計）' : undefined}
-          onChange={(e) => onQtyChange(it.id, 'stock_qty', e.target.value)}
-        />
-      </td>
-      <td style={{ textAlign: 'center' }}>
-        <input
-          className="osf-check-input"
-          type="checkbox"
-          checked={!!it.stock_checked}
-          onChange={(e) => onCheckToggle(it.id, e.target.checked)}
-        />
-      </td>
-      <td>
-        <input
-          className="osf-qty-input"
-          type="number"
-          min="0"
-          value={it.order_qty}
-          onChange={(e) => onQtyChange(it.id, 'order_qty', e.target.value)}
-        />
-      </td>
-      <td className={'osf-item-subtotal' + (it.order_qty > 0 ? ' osf-has-qty' : '')} style={{ textAlign: 'right' }}>
-        {it.order_qty > 0 ? yen(it.unit_price * it.order_qty) : '—'}
-      </td>
-    </tr>
+    <ItemRow
+      key={it.id}
+      item={it}
+      mode="supplier"
+      locations={locations}
+      season={season}
+      onQtyChange={onQtyChange}
+      onCheckToggle={onCheckToggle}
+      onUnitChange={onUnitChange}
+      onChangeLocation={onChangeLocation}
+    />
   );
 
   return (
-    <div className="osf-supplier-card">
-      <div className="osf-supplier-head">
-        <div>
-          <div className="osf-supplier-name">{supplier.name}</div>
-          {supplier.note && <div className="osf-supplier-note">{supplier.note}</div>}
+    <section className="osf-card">
+      <div className="osf-card-head">
+        <div className="osf-card-headmain">
+          <h2 className="osf-card-title">{supplier.name}</h2>
+          <div className="osf-card-sub">
+            {[supplier.note, threshold != null ? `送料無料 ${yen(threshold)}〜` : null].filter(Boolean).join(' ・ ')}
+          </div>
+          <div className="osf-card-sub">
+            {lastOrder ? `前回発注 ${formatShortDate(lastOrder.ordered_at)}${lastOrder.note ? `　${lastOrder.note}` : ''}` : '前回発注 なし'}
+          </div>
         </div>
-        <div className="osf-head-right">
-          {belowCount > 0 && <span className="osf-reorder-badge">要発注 {belowCount}品</span>}
-          {threshold != null && <div className="osf-supplier-note">送料無料 {yen(threshold)}〜</div>}
-        </div>
+        {belowCount > 0 && <span className="osf-reorder-badge big">要発注 {belowCount}品</span>}
       </div>
-      <table className="osf-item-table">
-        <thead>
-          <tr>
-            <th>商品</th>
-            <th style={{ textAlign: 'right' }}>在庫</th>
-            <th style={{ textAlign: 'center' }}>確認</th>
-            <th style={{ textAlign: 'right' }}>発注数</th>
-            <th style={{ textAlign: 'right' }}>小計</th>
-          </tr>
-        </thead>
-        <tbody>
-          <GroupedRows items={items} cardId={`supplier:${supplier.id}`} season={season} colSpan={5} renderRow={renderRow} />
-        </tbody>
-      </table>
-      <div className="osf-supplier-foot">
-        <div className="osf-foot-row">
-          <span>発注合計</span>
-          <span className="osf-foot-total">{yen(subtotal)}</span>
-        </div>
+
+      <div className="osf-rows">
+        <GroupedRows items={items} cardId={`supplier:${supplier.id}`} season={season} renderRow={renderRow} />
+      </div>
+
+      <div className="osf-sumbar">
         {threshold != null && (
-          <>
-            <div className="osf-progress-track">
-              <div className={'osf-progress-fill' + (reached ? ' osf-reached' : '')} style={{ width: `${pct}%` }} />
-            </div>
-            <div className={'osf-progress-label' + (reached ? ' osf-reached' : '')}>
-              {reached ? '送料無料ラインに到達済み' : `送料無料まであと ${yen(threshold - subtotal)}`}
-            </div>
-          </>
+          <div className="osf-sum-track">
+            <div className={'osf-sum-fill' + (reached ? ' reached' : '')} style={{ width: `${pct}%` }} />
+          </div>
         )}
-        <div className="osf-last-order">
-          {lastOrder
-            ? `前回発注: ${formatShortDate(lastOrder.ordered_at)}${lastOrder.note ? `　${lastOrder.note}` : ''}`
-            : '前回発注: なし'}
+        <div className="osf-sum-l">
+          <small>発注合計</small>
+          <b>{yen(subtotal)}</b>
+          {threshold != null && (
+            <span className={'osf-sum-ship' + (reached ? ' reached' : '')}>{reached ? '送料無料 達成' : `送料無料まで あと ${yen(threshold - subtotal)}`}</span>
+          )}
         </div>
-        <div className="osf-order-check-row">
-          <label className="osf-order-check-label">
-            <input
-              type="checkbox"
-              className="osf-check-input"
-              checked={false}
-              disabled={!hasOrder || saving}
-              onChange={onOrderedCheck}
-            />
-            発注済み
-          </label>
-          <input
-            type="text"
-            className="osf-note-input"
-            placeholder="備考（任意）"
-            value={note}
-            disabled={saving}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </div>
-        <button className="osf-request-btn" disabled={!hasOrder} onClick={() => setRequesting(true)}>
-          発注をお願いする（Todoに依頼）
+        <button type="button" className="osf-btn-sub" disabled={!hasOrder} onClick={() => setRequesting(true)}>
+          お願い
         </button>
-        {requesting && (
-          <RequestDialog
-            supplier={supplier}
-            onSend={(fromStaff, toStaff) => onRequestOrder({ supplier, items, note, fromStaff, toStaff })}
-            onClose={() => setRequesting(false)}
-          />
-        )}
+        <button type="button" className="osf-btn-main" disabled={!hasOrder || saving} onClick={complete}>
+          発注済み
+        </button>
       </div>
-    </div>
+
+      {requesting && (
+        <RequestDialog
+          supplier={supplier}
+          onSend={(fromStaff, toStaff, note) => onRequestOrder({ supplier, items, note, fromStaff, toStaff })}
+          onClose={() => setRequesting(false)}
+        />
+      )}
+    </section>
   );
 }

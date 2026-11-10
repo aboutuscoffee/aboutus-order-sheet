@@ -47,24 +47,22 @@ export function splitByGroup(items) {
 }
 
 // 折りたたんでいても、要発注や発注数ありの商品を見落とさないよう、見出しに件数を出す
-export function GroupHeaderRow({ group, expanded, onToggle, season, colSpan }) {
+export function GroupHeader({ group, expanded, onToggle, season }) {
   const below = group.items.filter((it) => isBelowReorderPoint(it, season)).length;
   const ordering = group.items.filter((it) => (it.order_qty || 0) > 0).length;
   return (
-    <tr className="osf-group-head" onClick={onToggle}>
-      <td colSpan={colSpan}>
-        <span className="osf-group-caret">{expanded ? '▼' : '▶'}</span>
-        <span className="osf-group-name">{group.name}</span>
-        <span className="osf-group-count">{group.items.length}品</span>
-        {below > 0 && <span className="osf-reorder-badge">要発注 {below}品</span>}
-        {ordering > 0 && <span className="osf-group-ordering">発注 {ordering}品</span>}
-      </td>
-    </tr>
+    <button type="button" className="osf-group-head" onClick={onToggle} aria-expanded={expanded}>
+      <span className="osf-group-caret">{expanded ? '▼' : '▶'}</span>
+      <span className="osf-group-name">{group.name}</span>
+      <span className="osf-group-count">{group.items.length}品</span>
+      {below > 0 && <span className="osf-reorder-badge">要発注 {below}品</span>}
+      {ordering > 0 && <span className="osf-group-ordering">発注 {ordering}品</span>}
+    </button>
   );
 }
 
 // 商品行（renderRow）を、グループなし→グループごと（見出し＋開いているときだけ中身）の順に並べる
-export function GroupedRows({ items, cardId, season, colSpan, renderRow }) {
+export function GroupedRows({ items, cardId, season, renderRow }) {
   const [expanded, toggle] = useExpandedGroups();
   const { plain, groups } = splitByGroup(items);
   return (
@@ -73,10 +71,12 @@ export function GroupedRows({ items, cardId, season, colSpan, renderRow }) {
       {groups.map((g) => {
         const id = `${cardId}|${g.name}`;
         const open = !!expanded[id];
-        return [
-          <GroupHeaderRow key={`h-${id}`} group={g} expanded={open} onToggle={() => toggle(id)} season={season} colSpan={colSpan} />,
-          ...(open ? g.items.map(renderRow) : []),
-        ];
+        return (
+          <div key={id}>
+            <GroupHeader group={g} expanded={open} onToggle={() => toggle(id)} season={season} />
+            {open && g.items.map(renderRow)}
+          </div>
+        );
       })}
     </>
   );

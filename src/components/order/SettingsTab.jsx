@@ -1,19 +1,5 @@
 import { useState } from 'react';
-import { CATEGORIES, UNCATEGORIZED } from '../../lib/constants';
 import LocationEditor from './LocationEditor';
-
-function CategorySelect({ value, onChange }) {
-  return (
-    <select value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
-      <option value="">{UNCATEGORIZED}</option>
-      {CATEGORIES.map((c) => (
-        <option key={c} value={c}>
-          {c}
-        </option>
-      ))}
-    </select>
-  );
-}
 
 function numOrNull(v) {
   return v === '' ? null : Number(v);
@@ -122,7 +108,8 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
   const [locationId, setLocationId] = useState(item.location_id ?? null);
   const [reorderPoint, setReorderPoint] = useState(item.reorder_point ?? '');
   const [reorderBusy, setReorderBusy] = useState(item.reorder_point_busy ?? '');
-  const [category, setCategory] = useState(item.category ?? null);
+  const [stockUnit, setStockUnit] = useState(item.stock_unit ?? '');
+  const [orderUnit, setOrderUnit] = useState(item.order_unit ?? '');
   const [itemNote, setItemNote] = useState(item.item_note ?? '');
   const [itemGroup, setItemGroup] = useState(item.item_group ?? '');
 
@@ -136,7 +123,8 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       reorder_point_busy: numOrNull(reorderBusy),
       supplier_id: supplierId,
       location_id: locationId,
-      category,
+      stock_unit: stockUnit.trim() || null,
+      order_unit: orderUnit.trim() || null,
       item_note: itemNote.trim() || null,
       item_group: itemGroup.trim() || null,
       ...overrides,
@@ -154,8 +142,8 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       </div>
       <div className="osf-form-grid">
         <div className="osf-form-row">
-          <label>単位</label>
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} onBlur={() => commit()} placeholder="袋・kg等" />
+          <label>荷姿</label>
+          <input value={unit} onChange={(e) => setUnit(e.target.value)} onBlur={() => commit()} placeholder="12本入・1kg など" />
         </div>
         <div className="osf-form-row">
           <label>単価</label>
@@ -186,15 +174,15 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
           />
         </div>
       </div>
-      <div className="osf-form-row">
-        <label>カテゴリ</label>
-        <CategorySelect
-          value={category}
-          onChange={(v) => {
-            setCategory(v);
-            commit({ category: v });
-          }}
-        />
+      <div className="osf-form-grid">
+        <div className="osf-form-row">
+          <label>在庫の単位</label>
+          <input value={stockUnit} onChange={(e) => setStockUnit(e.target.value)} onBlur={() => commit()} placeholder="本・袋 など" />
+        </div>
+        <div className="osf-form-row">
+          <label>発注の単位</label>
+          <input value={orderUnit} onChange={(e) => setOrderUnit(e.target.value)} onBlur={() => commit()} placeholder="箱・袋 など" />
+        </div>
       </div>
       <div className="osf-form-row">
         <label>メモ</label>
@@ -265,7 +253,8 @@ function AddItemBox({ suppliers, locations, onAdd }) {
   const [locationId, setLocationId] = useState(null);
   const [reorderPoint, setReorderPoint] = useState('');
   const [reorderBusy, setReorderBusy] = useState('');
-  const [category, setCategory] = useState(null);
+  const [stockUnit, setStockUnit] = useState('');
+  const [orderUnit, setOrderUnit] = useState('');
 
   const submit = () => {
     if (!name.trim() || !supplierId) return;
@@ -275,7 +264,8 @@ function AddItemBox({ suppliers, locations, onAdd }) {
       unit_price: Number(unitPrice) || 0,
       reorder_point: numOrNull(reorderPoint),
       reorder_point_busy: numOrNull(reorderBusy),
-      category,
+      stock_unit: stockUnit.trim() || null,
+      order_unit: orderUnit.trim() || null,
       supplier_id: supplierId,
       location_id: locationId,
       stock_qty: 0,
@@ -288,7 +278,8 @@ function AddItemBox({ suppliers, locations, onAdd }) {
     setUnitPrice('');
     setReorderPoint('');
     setReorderBusy('');
-    setCategory(null);
+    setStockUnit('');
+    setOrderUnit('');
   };
 
   if (suppliers.length === 0) {
@@ -303,8 +294,8 @@ function AddItemBox({ suppliers, locations, onAdd }) {
       </div>
       <div className="osf-form-grid">
         <div className="osf-form-row">
-          <label>単位</label>
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="袋・kg等" />
+          <label>荷姿</label>
+          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="12本入・1kg など" />
         </div>
         <div className="osf-form-row">
           <label>単価</label>
@@ -321,9 +312,15 @@ function AddItemBox({ suppliers, locations, onAdd }) {
           <input type="number" min="0" placeholder="未設定" value={reorderBusy} onChange={(e) => setReorderBusy(e.target.value)} />
         </div>
       </div>
-      <div className="osf-form-row">
-        <label>カテゴリ</label>
-        <CategorySelect value={category} onChange={setCategory} />
+      <div className="osf-form-grid">
+        <div className="osf-form-row">
+          <label>在庫の単位</label>
+          <input value={stockUnit} onChange={(e) => setStockUnit(e.target.value)} placeholder="本・袋 など" />
+        </div>
+        <div className="osf-form-row">
+          <label>発注の単位</label>
+          <input value={orderUnit} onChange={(e) => setOrderUnit(e.target.value)} placeholder="箱・袋 など" />
+        </div>
       </div>
       <div className="osf-form-row">
         <label>発注先</label>

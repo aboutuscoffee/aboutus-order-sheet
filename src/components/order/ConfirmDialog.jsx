@@ -1,16 +1,21 @@
 import { useState } from 'react';
 
+// 確認ダイアログ。resolve する値:
+//   キャンセル        → false
+//   OK（入力欄なし）  → true
+//   OK（入力欄あり）  → { value: 入力した文字（空でもよい場合は ''） }
+// confirm.withInput で入力欄を出す。confirm.inputOptional が true なら、空のままでもOKを押せる
 export default function ConfirmDialog({ confirm, onResolve }) {
   const [inputValue, setInputValue] = useState('');
 
   if (!confirm) return null;
 
   const withInput = !!confirm.withInput;
-  const canSubmit = !withInput || inputValue.trim().length > 0;
+  const canSubmit = !withInput || confirm.inputOptional || inputValue.trim().length > 0;
 
   const submit = () => {
     if (!canSubmit) return;
-    onResolve(withInput ? inputValue.trim() : true);
+    onResolve(withInput ? { value: inputValue.trim() } : true);
     setInputValue('');
   };
 

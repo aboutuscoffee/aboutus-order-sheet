@@ -3,7 +3,7 @@ import { fetchSheetStocks } from '../../lib/sheetImport';
 import { fetchInactiveSheetKeys } from '../../lib/db';
 import { idsOf, isMultiLocation } from '../../lib/stocks';
 
-export default function SheetImportDialog({ sheetId, items, supplierNames, onApply, onClose }) {
+export default function SheetImportDialog({ sheetId, lastImport, items, supplierNames, onApply, onClose }) {
   const [rows, setRows] = useState(null); // シートの行 Map
   const [inactiveKeys, setInactiveKeys] = useState([]);
   const [loadError, setLoadError] = useState(null);
@@ -78,7 +78,8 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
     <div className="osf-modal-backdrop" onClick={applying ? undefined : onClose}>
       <div className="osf-modal osf-modal-wide" onClick={(e) => e.stopPropagation()}>
         <p className="osf-modal-title">シートから在庫を取り込む</p>
-        {loadError && <div className="osf-toast-err">{loadError}</div>}
+        <p className="osf-import-last">{lastImport ? `前回の取り込み: ${lastImport}` : "まだ取り込んでいません"}</p>
+        {loadError && <div className="osf-inline-err">{loadError}</div>}
         {!rows && !loadError && <div className="osf-loading">シートを読み込み中…</div>}
 
         {rows && (
@@ -124,7 +125,7 @@ export default function SheetImportDialog({ sheetId, items, supplierNames, onApp
           </>
         )}
 
-        {applyError && <div className="osf-toast-err">{applyError}</div>}
+        {applyError && <div className="osf-inline-err">{applyError}</div>}
         <div className="osf-modal-actions">
           <button className="osf-mini-btn" onClick={onClose} disabled={applying}>
             閉じる

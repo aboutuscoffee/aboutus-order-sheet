@@ -224,7 +224,7 @@ export default function ProposalsTab({ proposals, suppliers, items, onSubmit, on
       <div className="osf-section-title">検討してほしいものを出す</div>
       <ProposalForm suppliers={suppliers} items={items} onSubmit={onSubmit} />
 
-      {decidersError && <div className="osf-toast-err">判断する人の一覧を読み込めませんでした：{decidersError}</div>}
+      {decidersError && <div className="osf-inline-err">判断する人の一覧を読み込めませんでした：{decidersError}</div>}
 
       <div className="osf-section-title">検討中（{open.length}）</div>
       {open.length === 0 ? <div className="osf-empty">検討中のものはありません。</div> : open.map(renderCard)}

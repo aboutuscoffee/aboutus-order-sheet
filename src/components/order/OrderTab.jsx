@@ -2,13 +2,11 @@ import { useMemo, useState } from 'react';
 import SupplierCard from './SupplierCard';
 import LocationCard from './LocationCard';
 import PendingDeliveries from './PendingDeliveries';
-import SheetImportDialog from './SheetImportDialog';
-import { CATEGORIES, SEASONS, UNCATEGORIZED } from '../../lib/constants';
-import { formatShortDate } from '../../lib/format';
+import { SEASONS } from '../../lib/constants';
 import { isBelowReorderPoint } from '../../lib/format';
 
 const VIEW_KEY = 'osf-order-view';
-const VIEWS = ['supplier', 'location', 'category'];
+const VIEWS = ['supplier', 'location'];
 
 function loadView() {
   try {
@@ -28,17 +26,15 @@ export default function OrderTab({
   onChangeSeason,
   onQtyChange,
   onCheckToggle,
+  onUnitChange,
   onCompleteOrder,
   onRequestOrder,
   onToggleDelivered,
-  sheetSettings,
-  onApplySheetImport,
   onChangeLocation,
   onLocationStockChange,
 }) {
   const [view, setView] = useState(loadView);
   const [onlyBelow, setOnlyBelow] = useState(false);
-  const [importing, setImporting] = useState(false);
 
   const changeView = (next) => {
     setView(next);
@@ -63,7 +59,7 @@ export default function OrderTab({
 
   const belowTotal = useMemo(() => items.filter((it) => isBelowReorderPoint(it, season)).length, [items, season]);
 
-  // 置き場別・カテゴリ別は金額を出さない表示なので、要発注だけに絞り込んでも合計に影響しない
+  // 置き場別は金額を出さない表示なので、要発注だけに絞り込んでも合計に影響しない
   const visibleItems = useMemo(
     () => (onlyBelow ? items.filter((it) => isBelowReorderPoint(it, season)) : items),
     [items, onlyBelow, season]
@@ -78,26 +74,16 @@ export default function OrderTab({
     return groups.filter((g) => g.items.length > 0);
   }, [locations, visibleItems]);
 
-  const categoryGroups = useMemo(() => {
-    const groups = CATEGORIES.map((c) => ({ id: c, title: c, items: visibleItems.filter((it) => it.category === c) }));
-    const known = new Set(CATEGORIES);
-    groups.push({ id: 'none', title: UNCATEGORIZED, items: visibleItems.filter((it) => !known.has(it.category)) });
-    return groups.filter((g) => g.items.length > 0);
-  }, [visibleItems]);
-
   if (suppliers.length === 0) {
     return <div className="osf-empty">発注先が未登録です。「設定」タブから追加してください。</div>;
   }
-
-  const groups = view === 'location' ? locationGroups : categoryGroups;
 
   return (
     <div>
       <PendingDeliveries entries={pending} onToggleDelivered={onToggleDelivered} />
 
       <div className="osf-season-row">
-        <span className="osf-season-label">発注目安</span>
-        <div className="osf-season-toggle">
+        <div className="osf-season-toggle" role="group" aria-label="発注目安の季節">
           {SEASONS.map((s) => (
             <button
               key={s.key}
@@ -111,39 +97,16 @@ export default function OrderTab({
         <span className="osf-season-count">{belowTotal > 0 ? `要発注 ${belowTotal}品` : '要発注なし'}</span>
       </div>
 
-      {sheetSettings.sheet_id && (
-        <div className="osf-import-bar">
-          <button className="osf-mini-btn" onClick={() => setImporting(true)}>
-            シートから在庫を取り込む
-          </button>
-          <span className="osf-import-last">
-            {sheetSettings.sheet_last_import ? `前回: ${formatShortDate(sheetSettings.sheet_last_import)}` : 'まだ取り込んでいません'}
-          </span>
-        </div>
-      )}
-      {importing && (
-        <SheetImportDialog
-          sheetId={sheetSettings.sheet_id}
-          items={items}
-          supplierNames={supplierNames}
-          onApply={onApplySheetImport}
-          onClose={() => setImporting(false)}
-        />
-      )}
-
-      <div className="osf-view-toggle">
+      <div className="osf-views" role="tablist">
         <button className={'osf-view-btn' + (view === 'supplier' ? ' active' : '')} onClick={() => changeView('supplier')}>
           発注先別
-        </button>
-        <button className={'osf-view-btn' + (view === 'category' ? ' active' : '')} onClick={() => changeView('category')}>
-          カテゴリ別
         </button>
         <button className={'osf-view-btn' + (view === 'location' ? ' active' : '')} onClick={() => changeView('location')}>
           置き場別
         </button>
       </div>
 
-      {view !== 'supplier' && (
+      {view === 'location' && (
         <label className="osf-only-below">
           <input type="checkbox" className="osf-check-input" checked={onlyBelow} onChange={(e) => setOnlyBelow(e.target.checked)} />
           要発注のものだけ表示
@@ -161,30 +124,33 @@ export default function OrderTab({
             season={season}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
+            onUnitChange={onUnitChange}
+            onChangeLocation={onChangeLocation}
             onCompleteOrder={onCompleteOrder}
             onRequestOrder={onRequestOrder}
           />
         ))}
 
-      {view !== 'supplier' &&
-        (groups.length === 0 ? (
+      {view === 'location' &&
+        (locationGroups.length === 0 ? (
           <div className="osf-empty">{onlyBelow ? '要発注のものはありません。' : '商品がありません。'}</div>
         ) : (
-          groups.map((group) => (
+          locationGroups.map((group) => (
             <LocationCard
-              key={`${view}:${group.id}`}
-              cardId={`${view}:${group.id}`}
-              locationId={view === 'location' && group.id !== 'none' ? group.id : undefined}
-              suppliers={view === 'location' ? suppliers : undefined}
+              key={group.id}
+              cardId={`location:${group.id}`}
+              locationId={group.id !== 'none' ? group.id : undefined}
+              suppliers={suppliers}
               title={group.title}
               items={group.items}
               supplierNames={supplierNames}
               locations={locations}
               season={season}
               onQtyChange={onQtyChange}
-              onCheckToggle={onCheckToggle}
-              onChangeLocation={onChangeLocation}
               onLocationStockChange={onLocationStockChange}
+              onCheckToggle={onCheckToggle}
+              onUnitChange={onUnitChange}
+              onChangeLocation={onChangeLocation}
             />
           ))
         ))}

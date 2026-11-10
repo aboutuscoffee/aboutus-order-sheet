@@ -1,156 +1,210 @@
+/* =====================================================================
+   発注表アプリ — デザイン案A5「和モダン」
+   生成り×墨×深緑、細い罫線、明朝の見出し。スマホ1画面に商品5品が入る行の高さ。
+   ===================================================================== */
+:root { --nav-h: 62px; }
+
 body {
   margin: 0;
-  padding: 16px;
-  background: #EDEBE1;
+  background: #F4EFE9;
 }
 
 #osf-app {
-  --ink: #2A2E24;
-  --ink-soft: #6B7062;
-  --line: #D3D6C6;
-  --surface: #FFFFFF;
-  --page: #FBFAF6;
-  --dark: #33372F;
+  --ink: #2B2723;
+  --ink-soft: #8A8178;
+  --line: #E2DACE;
+  --line-strong: #D2C9BB;
+  --surface: #FBF8F3;
+  --page: #F4EFE9;
+  --dark: #2B2723;
   --accent: #3F6B4A;
-  --accent-soft: #E3ECE0;
+  --accent-soft: #E6EDE3;
   --good: #3F6B4A;
-  --good-soft: #E3ECE0;
-  --warn: #B0713F;
-  --warn-soft: #F7EBE0;
-  font-family: -apple-system, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --good-soft: #E6EDE3;
+  --warn: #A15D3D;
+  --warn-soft: #F3E4DA;
+  --serif: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  font-family: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
   color: var(--ink);
   background: var(--page);
-  border-radius: 12px;
-  max-width: 760px;
+  max-width: 640px;
   margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
 }
 #osf-app * { box-sizing: border-box; }
 #osf-app button { font-family: inherit; cursor: pointer; }
 #osf-app input, #osf-app select, #osf-app textarea {
-  font-family: inherit; font-size: 13px; color: var(--ink);
-  border: 0.5px solid var(--line); border-radius: 6px; background: #fff;
+  font-family: inherit; font-size: 14px; color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: 6px; background: #FFFEFB;
   padding: 7px 9px; width: 100%;
 }
 #osf-app input:focus, #osf-app select:focus, #osf-app textarea:focus {
-  outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft);
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(63, 107, 74, 0.14);
 }
 .osf-loading { padding: 2rem; text-align: center; color: var(--ink-soft); font-size: 14px; }
-.osf-header { background: var(--dark); color: #F2F4EC; border-radius: 12px 12px 0 0; padding: 16px 20px; }
-.osf-header .osf-brand { font-size: 12px; letter-spacing: 0.08em; color: #A9C29B; margin: 0 0 2px; }
-.osf-header h1 { font-size: 18px; font-weight: 500; margin: 0; }
-.osf-tabs { display: flex; gap: 4px; padding: 12px 12px 0; background: var(--dark); }
-.osf-tab { flex: 1; text-align: center; padding: 10px 8px; font-size: 13px; font-weight: 500; color: #CBD3C0; background: transparent; border: none; border-radius: 8px 8px 0 0; }
-.osf-tab.active { background: var(--page); color: var(--dark); }
-.osf-body { padding: 18px 18px 24px; }
-.osf-toast { background: var(--good-soft); color: #29452C; border: 0.5px solid var(--good); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 14px; text-align: center; }
-.osf-toast-err { background: var(--warn-soft); color: var(--warn); border: 0.5px solid #E0BC9E; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 14px; text-align: center; }
 .osf-empty { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 30px 10px; }
 
-/* Supplier card */
-.osf-supplier-card { background: var(--surface); border: 0.5px solid var(--line); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
-.osf-supplier-head { padding: 12px 16px; background: var(--accent-soft); display: flex; justify-content: space-between; align-items: baseline; }
-.osf-supplier-name { font-size: 15px; font-weight: 600; color: var(--dark); }
-.osf-supplier-note { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
-.osf-item-table { width: 100%; border-collapse: collapse; }
-.osf-item-table th { font-size: 10px; color: var(--ink-soft); font-weight: 500; text-align: left; padding: 6px 8px; border-bottom: 0.5px solid var(--line); }
-.osf-item-table td { padding: 6px 8px; border-bottom: 0.5px solid var(--line); vertical-align: middle; }
-.osf-item-table tr:last-child td { border-bottom: none; }
-.osf-item-name { font-size: 13px; }
-.osf-item-unit { font-size: 11px; color: var(--ink-soft); }
-.osf-item-price { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
-.osf-item-subtotal { font-size: 13px; font-weight: 500; white-space: nowrap; }
-.osf-item-subtotal.osf-has-qty { color: var(--accent); }
-.osf-qty-input { width: 60px; text-align: right; padding: 5px 6px; }
-.osf-check-input { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+/* ---- ヘッダー・下タブ ---- */
+.osf-header { display: flex; justify-content: space-between; align-items: flex-end; padding: max(14px, env(safe-area-inset-top)) 16px 8px; }
+.osf-brand { font-size: 9px; letter-spacing: 0.14em; color: var(--ink-soft); }
+.osf-header h1 { margin: 2px 0 0; font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: 0.06em; line-height: 1.2; }
+.osf-imp { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); border: 1px solid #CFC6B8; background: none; padding: 6px 11px; border-radius: 999px; }
+.osf-imp svg { width: 14px; height: 14px; }
+.osf-body { padding: 4px 10px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom)); }
+.osf-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 640px; z-index: 30;
+  display: flex; justify-content: space-around; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
+}
+.osf-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: none; color: var(--ink-soft); font-size: 10px; padding: 3px 0; }
+.osf-nav-btn.active { color: var(--ink); font-weight: 600; }
+.osf-nav-icon { position: relative; display: inline-flex; }
+.osf-nav-icon svg { width: 22px; height: 22px; }
+.osf-nav-icon em { position: absolute; top: -4px; right: -9px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px; background: var(--warn); color: #fff; font-style: normal; font-size: 9px; font-weight: 700; line-height: 15px; text-align: center; }
 
-.osf-supplier-foot { padding: 12px 16px; border-top: 0.5px solid var(--line); }
-.osf-foot-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-.osf-foot-total { font-size: 14px; font-weight: 600; }
-.osf-progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-bottom: 6px; }
-.osf-progress-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
-.osf-progress-fill.osf-reached { background: var(--good); }
-.osf-progress-label { font-size: 12px; color: var(--ink-soft); }
-.osf-progress-label.osf-reached { color: var(--good); font-weight: 500; }
-.osf-order-btn { width: 100%; padding: 10px; border: none; background: var(--dark); color: #F2F4EC; font-size: 13px; font-weight: 500; border-radius: 8px; margin-top: 4px; }
-.osf-order-btn:disabled { opacity: 0.4; cursor: default; }
-.osf-order-check-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
-.osf-order-check-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
-.osf-note-input { flex: 1; }
-.osf-head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.osf-reorder-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--warn); color: #fff; font-size: 10px; font-weight: 600; line-height: 1.6; white-space: nowrap; }
-.osf-head-right .osf-reorder-badge { margin-left: 0; }
-.osf-request-btn { width: 100%; margin-top: 10px; padding: 9px; border: 0.5px solid var(--accent); background: transparent; color: var(--accent); font-size: 13px; font-weight: 500; border-radius: 8px; }
-.osf-request-btn:disabled { opacity: 0.4; cursor: default; }
+/* ---- 通知 ---- */
+.osf-toast { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 200; max-width: 92%; background: var(--dark); color: #F4EFE9; border-radius: 999px; padding: 9px 18px; font-size: 13px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25); }
+.osf-toast.err { background: var(--warn); }
+.osf-inline-err { background: var(--warn-soft); color: var(--warn); border: 1px solid #E5C7B6; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
 
-/* Settings */
-.osf-section-title { font-size: 12px; font-weight: 500; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-.osf-section-title:first-child { margin-top: 0; }
+/* ---- 発注表タブ上部: 季節・表示の切り替え ---- */
+.osf-season-row { display: flex; align-items: center; gap: 10px; padding: 2px 6px 8px; }
+.osf-season-toggle { display: flex; border: 1px solid #CFC6B8; border-radius: 999px; padding: 2px; }
+.osf-season-btn { border: none; background: transparent; padding: 4px 12px; font-size: 12px; color: var(--ink-soft); border-radius: 999px; }
+.osf-season-btn.active { background: var(--dark); color: #F4EFE9; }
+.osf-season-count { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--warn); }
+.osf-views { display: flex; margin: 0 6px 10px; border-bottom: 1px solid #D8D0C4; }
+.osf-view-btn { flex: 1; border: none; background: none; padding: 8px 0; font-size: 13px; color: var(--ink-soft); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.osf-view-btn.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
+.osf-only-below { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 0 6px 10px; }
+
+/* ---- カード（発注先・置き場） ---- */
+.osf-card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; margin-bottom: 16px; }
+.osf-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 12px 14px 10px; }
+.osf-card-headmain { min-width: 0; }
+.osf-card-title { margin: 0; font-family: var(--serif); font-weight: 600; font-size: 17px; letter-spacing: 0.04em; }
+.osf-card-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
+.osf-card-sub:empty { display: none; }
+.osf-reorder-badge { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; color: var(--warn); border: 1px solid #D9B7A5; font-size: 10px; font-weight: 700; line-height: 1.7; white-space: nowrap; }
+.osf-reorder-badge.big { margin: 0; background: var(--warn-soft); border-color: var(--warn-soft); font-size: 11px; padding: 1px 10px; flex-shrink: 0; }
+.osf-rows { border-top: 1px solid var(--line); }
+
+/* ---- 商品1行（A5）---- */
+.osf-ir { padding: 8px 14px 9px; border-top: 1px solid #E7DFD3; }
+.osf-rows > .osf-ir:first-child, .osf-rows > div:first-child > .osf-ir:first-child { border-top: none; }
+.osf-ir-top { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; }
+.osf-ir-main { min-width: 0; cursor: pointer; }
+.osf-ir-name { display: flex; align-items: center; gap: 2px; font-size: 15px; font-weight: 600; }
+.osf-ir-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.osf-ir-caret { font-size: 9px; color: #B4AB9F; margin-left: 6px; }
+.osf-ir-sub { font-size: 11px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.osf-check-input { width: 24px; height: 24px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin: 0; }
+.osf-ir-split { display: flex; margin-top: 5px; border: 1px solid var(--line); border-radius: 6px; background: #FFFEFB; }
+.osf-ir-half { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 1px 8px; position: relative; }
+.osf-ir-half + .osf-ir-half { border-left: 1px solid var(--line); background: #F8F4EC; border-radius: 0 5px 5px 0; }
+.osf-ir-half:first-child { border-radius: 5px 0 0 5px; }
+.osf-ir-half:focus-within { box-shadow: inset 0 -2px 0 var(--accent); }
+.osf-ir-half small { font-size: 10px; color: var(--ink-soft); flex-shrink: 0; }
+/* 数字の入力欄: 枠なし・大きな文字（16px未満だとiPhoneで入力時に拡大される）。右端に数字、すぐ横に単位 */
+#osf-app .osf-num { flex: 1; min-width: 0; width: 100%; height: 32px; border: none; background: transparent; box-shadow: none; padding: 0 2px; text-align: right; font-size: 19px; font-variant-numeric: tabular-nums; }
+#osf-app .osf-num:focus { box-shadow: none; border: none; }
+#osf-app .osf-num:disabled { color: var(--ink-soft); }
+.osf-ir-more { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.osf-item-memo { font-size: 11px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 4px; }
+.osf-stock-breakdown { font-size: 11px; color: var(--accent); margin-bottom: 4px; }
+
+/* 単位の選択 */
+.osf-unit { position: static; }
+.osf-unit-btn { border: none; background: none; padding: 0 1px; font-size: 11px; color: #6F675D; border-bottom: 1px dotted #A89F92; white-space: nowrap; }
+.osf-unit-btn i { font-style: normal; font-size: 8px; margin-left: 1px; color: var(--ink-soft); }
+.osf-unit-btn.empty { color: #B4AB9F; }
+.osf-unit-pop { position: absolute; z-index: 40; right: 0; top: calc(100% + 4px); width: 230px; max-width: 86vw; background: #fff; border: 1px solid #CFC6B8; border-radius: 10px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2); padding: 10px; }
+.osf-unit-title { font-size: 10px; color: var(--ink-soft); margin-bottom: 6px; }
+.osf-unit-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.osf-unit-chip { border: 1px solid #DDD5C9; background: #fff; border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--ink); }
+.osf-unit-chip.on { background: var(--dark); color: #fff; border-color: var(--dark); }
+.osf-unit-free { display: flex; gap: 6px; margin-top: 8px; }
+.osf-unit-free input { flex: 1; min-width: 0; padding: 6px 8px; font-size: 14px; }
+.osf-unit-clear { margin-top: 8px; border: none; background: none; color: var(--ink-soft); font-size: 11px; text-decoration: underline; padding: 0; }
+
+/* ---- 合計・発注のバー（カードの下。見えている間は下タブの上に固定）---- */
+.osf-sumbar {
+  position: sticky; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)); z-index: 10;
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--surface); border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 14px -10px rgba(0, 0, 0, 0.18);
+}
+.osf-sum-track { position: absolute; left: 0; right: 0; top: -1px; height: 3px; background: #E7DFD3; }
+.osf-sum-fill { height: 100%; background: #B9AE9C; transition: width 0.2s; }
+.osf-sum-fill.reached { background: var(--accent); }
+.osf-sum-l { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.osf-sum-l small { font-size: 10px; color: var(--ink-soft); width: 100%; }
+.osf-sum-l b { font-size: 19px; font-weight: 700; }
+.osf-sum-ship { font-size: 10.5px; color: var(--ink-soft); }
+.osf-sum-ship.reached { color: var(--accent); font-weight: 600; }
+.osf-btn-main, .osf-btn-sub { height: 38px; padding: 0 14px; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.osf-btn-main { border: none; background: var(--dark); color: #F4EFE9; }
+.osf-btn-sub { border: 1px solid var(--dark); background: transparent; color: var(--dark); }
+.osf-btn-main:disabled, .osf-btn-sub:disabled { opacity: 0.35; cursor: default; }
+
+/* ---- 折りたたみグループ・置き場内の発注先の見出し ---- */
+.osf-group-head { display: flex; align-items: center; width: 100%; text-align: left; border: none; border-top: 1px solid #E7DFD3; background: var(--accent-soft); padding: 9px 14px; font-size: 13px; color: var(--ink); }
+.osf-group-caret { width: 16px; color: var(--accent); font-size: 10px; }
+.osf-group-name { font-weight: 600; }
+.osf-group-count { margin-left: 8px; font-size: 11px; color: var(--ink-soft); }
+.osf-group-ordering { margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 600; line-height: 1.7; }
+.osf-subhead { padding: 7px 14px; background: #F1EDE4; border-top: 1px solid #E7DFD3; font-size: 12px; }
+.osf-subhead-name { font-weight: 600; }
+
+/* ---- 置き場の編集 ---- */
+.osf-loc-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.osf-loc-select { width: auto; max-width: 100%; padding: 3px 6px; font-size: 12px; color: var(--ink-soft); }
+.osf-loc-chip { display: inline-flex; align-items: center; gap: 2px; padding: 1px 4px 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; }
+.osf-loc-chip button { border: none; background: transparent; color: var(--ink-soft); font-size: 12px; line-height: 1; padding: 0 3px; }
+.osf-loc-add { color: var(--accent); }
+
+/* ---- 設定 ---- */
+.osf-section-title { font-family: var(--serif); font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: 0.06em; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line-strong); }
+.osf-section-title:first-child { margin-top: 4px; }
 .osf-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .osf-form-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
 .osf-form-row label { font-size: 11px; color: var(--ink-soft); min-width: 64px; }
-.osf-mini-btn { font-size: 11px; border: 0.5px solid var(--line); background: #fff; color: var(--ink-soft); padding: 5px 10px; border-radius: 999px; white-space: nowrap; }
+.osf-mini-btn { font-size: 12px; border: 1px solid var(--line-strong); background: #fff; color: var(--ink-soft); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
 .osf-mini-btn.osf-danger { color: var(--warn); border-color: #E0BC9E; }
-.osf-mini-btn.osf-primary { background: var(--dark); color: #F2F4EC; border: none; }
-.osf-settings-item { background: var(--surface); border: 0.5px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-.osf-settings-item-top { display: flex; justify-content: space-between; align-items: center; }
-.osf-add-box { background: var(--accent-soft); border-radius: 10px; padding: 12px; margin-top: 12px; }
+.osf-mini-btn.osf-primary { background: var(--dark); color: #F4EFE9; border: none; }
+.osf-mini-btn:disabled { opacity: 0.4; cursor: default; }
+.osf-settings-item { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; }
+.osf-settings-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.osf-add-box { background: var(--accent-soft); border-radius: 4px; padding: 12px; margin-top: 12px; }
 
-/* History */
-.osf-history-item { background: var(--surface); border: 0.5px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
+/* ---- 履歴 ---- */
+.osf-history-item { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; }
 .osf-history-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-.osf-history-supplier { font-size: 13px; font-weight: 500; }
+.osf-history-supplier { font-family: var(--serif); font-size: 15px; font-weight: 600; }
 .osf-history-date { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
-.osf-history-total { font-size: 14px; font-weight: 600; color: var(--accent); }
-.osf-history-detail { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--line); display: none; font-size: 12px; }
+.osf-history-total { font-size: 15px; font-weight: 700; color: var(--accent); }
+.osf-history-detail { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: none; font-size: 12px; }
 .osf-history-detail.open { display: block; }
 .osf-history-row { display: flex; justify-content: space-between; padding: 3px 0; }
-.osf-history-note { background: var(--accent-soft); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; color: var(--dark); }
+.osf-history-note { background: var(--accent-soft); border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; }
+.osf-history-badge { margin-left: 8px; font-family: inherit; font-size: 10px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
+.osf-history-badge.osf-done { background: var(--good-soft); color: var(--good); }
 
-/* View toggle / pending deliveries / last order */
-.osf-view-toggle { display: flex; gap: 4px; background: var(--accent-soft); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
-.osf-view-btn { flex: 1; border: none; background: transparent; padding: 7px 8px; font-size: 13px; font-weight: 500; color: var(--ink-soft); border-radius: 999px; }
-.osf-view-btn.active { background: var(--dark); color: #F2F4EC; }
-.osf-season-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.osf-season-label { font-size: 12px; color: var(--ink-soft); }
-.osf-season-toggle { display: flex; gap: 2px; background: var(--accent-soft); border-radius: 999px; padding: 2px; }
-.osf-season-btn { border: none; background: transparent; padding: 4px 12px; font-size: 12px; font-weight: 500; color: var(--ink-soft); border-radius: 999px; }
-.osf-season-btn.active { background: var(--accent); color: #fff; }
-.osf-season-count { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--warn); }
-.osf-only-below { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }
-.osf-loc-select { margin-top: 4px; width: auto; max-width: 100%; padding: 2px 6px; font-size: 11px; color: var(--ink-soft); }
-.osf-item-memo { font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
-.osf-import-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.osf-import-last { font-size: 11px; color: var(--ink-soft); }
-.osf-modal-wide { max-width: 440px; max-height: 85vh; overflow-y: auto; }
-.osf-modal-title { font-size: 15px; font-weight: 600; margin: 0 0 10px; }
-.osf-import-list { border: 0.5px solid var(--line); border-radius: 8px; margin-bottom: 12px; max-height: 42vh; overflow-y: auto; }
-.osf-import-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 0.5px solid var(--line); font-size: 13px; cursor: pointer; }
-.osf-import-row:last-child { border-bottom: none; }
-.osf-import-name { flex: 1; min-width: 0; }
-.osf-import-sub { display: block; font-size: 11px; color: var(--ink-soft); }
-.osf-import-warn { display: inline-block; margin-top: 2px; padding: 0 7px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-size: 10px; font-weight: 600; }
-.osf-import-values { white-space: nowrap; font-size: 12px; color: var(--ink-soft); }
-.osf-import-values strong { color: var(--accent); font-size: 13px; }
-.osf-import-new { font-size: 12px; margin-bottom: 12px; }
-.osf-import-new-list { margin-top: 6px; color: var(--ink-soft); line-height: 1.6; }
-.osf-import-new-note { margin-top: 4px; font-size: 11px; color: var(--ink-soft); }
-.osf-pending { margin-bottom: 18px; }
-.osf-pending-card { background: var(--warn-soft); border: 0.5px solid #E0BC9E; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
+/* ---- 納品待ち ---- */
+.osf-pending { margin-bottom: 14px; }
+.osf-pending-card { background: var(--warn-soft); border: 1px solid #E5C7B6; border-radius: 4px; padding: 10px 14px; margin-bottom: 10px; }
 .osf-pending-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.osf-pending-supplier { font-size: 14px; font-weight: 600; }
+.osf-pending-supplier { font-family: var(--serif); font-size: 15px; font-weight: 600; }
 .osf-pending-date { font-size: 11px; color: var(--ink-soft); }
 .osf-pending-note { font-size: 12px; color: var(--ink-soft); margin-bottom: 4px; }
-.osf-pending-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 0.5px solid #E8D3BF; font-size: 13px; cursor: pointer; }
+.osf-pending-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid #E8D3BF; font-size: 13px; cursor: pointer; }
 .osf-pending-row.osf-done { color: var(--ink-soft); text-decoration: line-through; }
 .osf-pending-item { flex: 1; }
 .osf-pending-state { font-size: 11px; color: var(--warn); }
 .osf-pending-row.osf-done .osf-pending-state { color: var(--good); }
-.osf-last-order { font-size: 12px; color: var(--ink-soft); margin-bottom: 8px; }
-.osf-history-badge { margin-left: 8px; font-size: 10px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
-.osf-history-badge.osf-done { background: var(--good-soft); color: var(--good); }
 
-/* Proposals (検討) */
-.osf-proposal { background: var(--surface); border: 0.5px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+/* ---- 検討 ---- */
+.osf-proposal { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; }
 .osf-proposal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .osf-proposal-title { font-size: 14px; font-weight: 600; }
 .osf-proposal-status { flex-shrink: 0; font-size: 10px; font-weight: 600; padding: 1px 9px; border-radius: 999px; }
@@ -160,75 +214,35 @@ body {
 .osf-st-ng { background: #F1E4E0; color: #9C4A3C; }
 .osf-proposal-meta { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
 .osf-proposal-reason { font-size: 13px; margin-top: 8px; white-space: pre-wrap; line-height: 1.6; }
-.osf-proposal-decision { font-size: 12px; margin-top: 8px; padding: 6px 8px; background: var(--accent-soft); border-radius: 6px; }
-.osf-proposal-actions { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--line); }
+.osf-proposal-decision { font-size: 12px; margin-top: 8px; padding: 6px 8px; background: var(--accent-soft); border-radius: 4px; }
+.osf-proposal-actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .osf-proposal-actions > input { margin-bottom: 8px; }
 .osf-proposal-buttons { display: flex; gap: 8px; }
 .osf-proposal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
-.osf-tab { padding-left: 4px; padding-right: 4px; }
 
-/* Confirm modal */
-.osf-modal-backdrop { position: fixed; inset: 0; background: rgba(42, 46, 36, 0.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
-.osf-modal { background: var(--surface); border-radius: 12px; padding: 20px; max-width: 320px; width: 100%; }
-.osf-modal-text { font-size: 13px; margin: 0 0 16px; line-height: 1.6; }
-.osf-modal-input { margin-bottom: 16px; }
+/* ---- ダイアログ・シート取り込み ---- */
+.osf-modal-backdrop { position: fixed; inset: 0; background: rgba(43, 39, 35, 0.5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+.osf-modal { background: var(--surface); border-radius: 10px; padding: 20px; max-width: 340px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.osf-modal-wide { max-width: 460px; }
+.osf-modal-title { font-family: var(--serif); font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+.osf-modal-text { font-size: 13px; margin: 0 0 14px; line-height: 1.6; }
+.osf-modal-input { margin-bottom: 14px; }
 .osf-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.osf-mini-btn:disabled { opacity: 0.4; cursor: default; }
+.osf-import-last { font-size: 11px; color: var(--ink-soft); margin: 0 0 10px; }
+.osf-import-list { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 12px; max-height: 42vh; overflow-y: auto; background: #fff; }
+.osf-import-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 13px; cursor: pointer; }
+.osf-import-row:last-child { border-bottom: none; }
+.osf-import-name { flex: 1; min-width: 0; }
+.osf-import-sub { display: block; font-size: 11px; color: var(--ink-soft); }
+.osf-import-warn { display: inline-block; margin-top: 2px; padding: 0 7px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-size: 10px; font-weight: 600; }
+.osf-import-values { white-space: nowrap; font-size: 12px; color: var(--ink-soft); }
+.osf-import-values strong { color: var(--accent); font-size: 14px; }
+.osf-import-new { font-size: 12px; margin-bottom: 12px; }
+.osf-import-new-list { margin-top: 6px; color: var(--ink-soft); line-height: 1.6; }
+.osf-import-new-note { margin-top: 4px; font-size: 11px; color: var(--ink-soft); }
 
-/* Collapsible item groups / multi-location editor */
-.osf-group-head { cursor: pointer; background: var(--accent-soft); }
-.osf-group-head td { padding: 8px 10px; border-bottom: 0.5px solid var(--line); font-size: 13px; }
-.osf-group-caret { display: inline-block; width: 16px; color: var(--accent); font-size: 11px; }
-.osf-group-name { font-weight: 600; }
-.osf-group-count { margin-left: 8px; font-size: 11px; color: var(--ink-soft); }
-.osf-group-ordering { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 600; }
-.osf-group-head .osf-reorder-badge { margin-left: 6px; }
-.osf-loc-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
-.osf-loc-editor .osf-loc-select { margin-top: 0; }
-.osf-loc-chip { display: inline-flex; align-items: center; gap: 2px; padding: 1px 4px 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; }
-.osf-loc-chip button { border: none; background: transparent; color: var(--ink-soft); font-size: 12px; line-height: 1; padding: 0 3px; }
-.osf-loc-add { color: var(--accent); }
-
-/* Per-location stock / supplier sub-headers */
-.osf-stock-breakdown { margin-top: 2px; font-size: 11px; color: var(--accent); }
-.osf-supplier-subhead td { padding: 6px 10px; background: #F3F5EC; border-bottom: 0.5px solid var(--line); font-size: 12px; }
-.osf-subhead-name { font-weight: 600; color: var(--dark); }
-.osf-qty-input:disabled { background: #F4F4EE; color: var(--ink-soft); }
-
-/* ===== スマホ幅: 商品1行を「商品名（上）＋在庫・確認・発注数（下）」に組み替える =====
-   表のままだと商品名の列が幅を取り、数字の入力欄が20px幅まで潰れていた */
 @media (max-width: 560px) {
-  body { padding: 8px; }
-  .osf-body { padding: 12px 10px 20px; }
-  .osf-item-table, .osf-item-table tbody { display: block; }
-  .osf-item-table thead { display: none; }
-  .osf-item-table tbody tr { display: block; }
-  .osf-item-table tbody tr:not(.osf-group-head):not(.osf-supplier-subhead) {
-    display: grid;
-    grid-template-columns: 1fr 52px 1fr;
-    column-gap: 10px;
-    align-items: end;
-    padding: 10px 12px 12px;
-    border-bottom: 0.5px solid var(--line);
-  }
-  .osf-item-table tbody tr:not(.osf-group-head):not(.osf-supplier-subhead) > td { padding: 0; border-bottom: none; }
-  .osf-item-table tbody tr > td:first-child { grid-column: 1 / -1; margin-bottom: 8px; }
-  /* 表の見出しを隠した代わりに、各欄の上に小さなラベルを付ける（在庫=2列目、確認=3列目、発注数=4列目、小計=5列目） */
-  .osf-item-table tbody tr > td:nth-child(2)::before,
-  .osf-item-table tbody tr > td:nth-child(3)::before,
-  .osf-item-table tbody tr > td:nth-child(4)::before { display: block; font-size: 10px; color: var(--ink-soft); margin-bottom: 3px; text-align: left; }
-  .osf-item-table tbody tr > td:nth-child(2)::before { content: '在庫'; }
-  .osf-item-table tbody tr > td:nth-child(3)::before { content: '確認'; text-align: center; }
-  .osf-item-table tbody tr > td:nth-child(4)::before { content: '発注数'; }
-  .osf-item-table tbody tr > td:nth-child(5) { grid-column: 1 / -1; margin-top: 6px; text-align: right !important; }
-  .osf-item-table tbody tr > td:nth-child(5)::before { content: '小計 '; font-size: 10px; color: var(--ink-soft); font-weight: 400; }
-  .osf-item-table td.osf-item-subtotal:not(.osf-has-qty) { display: none; }
-  /* 数字の入力欄: 幅いっぱい・大きめの文字（16px未満だとiPhoneで入力時に画面が拡大される） */
-  #osf-app .osf-qty-input { width: 100%; min-width: 0; height: 40px; padding: 4px 10px; font-size: 16px; text-align: right; }
-  .osf-check-input { width: 26px; height: 26px; }
-  .osf-item-table tbody tr > td:nth-child(3) { text-align: center; }
-  .osf-group-head td, .osf-supplier-subhead td { display: block; }
-  .osf-supplier-head, .osf-supplier-foot { padding-left: 12px; padding-right: 12px; }
-  .osf-order-check-row { flex-wrap: wrap; }
-  .osf-note-input { min-width: 0; }
+  /* iPhoneは16px未満の入力欄にフォーカスすると画面が拡大されるので、スマホでは入力欄を16pxにする */
+  #osf-app input, #osf-app select, #osf-app textarea { font-size: 16px; }
+  .osf-body { padding-left: 8px; padding-right: 8px; }
 }

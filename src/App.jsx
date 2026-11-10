@@ -26,8 +26,23 @@ import SettingsTab from './components/order/SettingsTab';
 import HistoryTab from './components/order/HistoryTab';
 import ProposalsTab from './components/order/ProposalsTab';
 import ConfirmDialog from './components/order/ConfirmDialog';
+import SheetImportDialog from './components/order/SheetImportDialog';
+import { formatShortDate } from './lib/format';
 
 const QTY_SAVE_DELAY = 500;
+
+const svg = (d) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {d}
+  </svg>
+);
+const ICONS = {
+  list: svg(<><path d="M8 6h12M8 12h12M8 18h12" /><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></>),
+  clock: svg(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
+  note: svg(<><path d="M5 4h14v16H5z" /><path d="M9 9h6M9 13h6" /></>),
+  gear: svg(<><circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /></>),
+  down: svg(<path d="M12 4v11M7 11l5 5 5-5M5 20h14" />),
+};
 
 export default function App() {
   const [suppliers, setSuppliers] = useState(null);
@@ -41,6 +56,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('order');
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
+  const [importing, setImporting] = useState(false);
   const saveTimers = useRef({});
   const itemsRef = useRef(null); // 保存する内容を最新の状態から作るため
   const confirmResolver = useRef(null);
@@ -119,11 +135,18 @@ export default function App() {
     updateItemQty(itemId, { stock_checked: checked }).catch((e) => showToast(e.message, true));
   }, [showToast]);
 
-  const onCompleteOrder = useCallback(async (supplier, supplierItems, note) => {
+  // 発注済みにする: 確認（備考は任意）のうえ、履歴に保存して発注数・確認をリセットする
+  const onCompleteOrder = useCallback(async (supplier, supplierItems) => {
     const ordered = supplierItems.filter((it) => (it.order_qty || 0) > 0);
     if (ordered.length === 0) return;
+    const answer = await askConfirm(
+      `${supplier.name} を発注済みにします。履歴に保存し、発注数と「確認」をリセットします。`,
+      '発注済みにする',
+      { withInput: true, inputOptional: true, inputPlaceholder: '備考（任意）' }
+    );
+    if (!answer) return;
     try {
-      const saved = await completeOrder(supplier, ordered, note);
+      const saved = await completeOrder(supplier, ordered, answer.value);
       const ids = new Set(ordered.map((it) => it.id));
       setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, order_qty: 0, stock_checked: false } : it)));
       setHistory((prev) => [saved, ...prev]);
@@ -131,7 +154,14 @@ export default function App() {
     } catch (e) {
       showToast(e.message, true);
     }
+  }, [showToast, askConfirm]);
+
+  // 在庫・発注の単位（商品ごと）。選んだらすぐ保存する
+  const onUnitChange = useCallback((itemId, field, value) => {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, [field]: value } : it)));
+    updateItemQty(itemId, { [field]: value }).catch((e) => showToast(e.message, true));
   }, [showToast]);
+
 
   // エラーはダイアログ側でそのまま表示するので、ここでは握りつぶさず投げる
   const onRequestOrder = useCallback(async (params) => {
@@ -296,36 +326,40 @@ export default function App() {
   };
 
   if (error) {
-    return <div id="osf-app"><div className="osf-body"><div className="osf-toast-err">読み込みエラー：{error}</div></div></div>;
+    return <div id="osf-app"><div className="osf-body"><div className="osf-inline-err">読み込みエラー：{error}</div></div></div>;
   }
   if (!suppliers || !items || !locations || !history || !proposals || !season || !sheetSettings) {
     return <div id="osf-app"><div className="osf-loading">読み込み中…</div></div>;
   }
 
   const openProposalCount = proposals.filter((p) => p.status === 'pending' || p.status === 'on_hold').length;
+  const supplierNames = Object.fromEntries(suppliers.map((s) => [s.id, s.name]));
+
+  const NAV = [
+    { key: 'order', label: '発注表', icon: ICONS.list },
+    { key: 'history', label: '履歴', icon: ICONS.clock },
+    { key: 'proposals', label: '検討', icon: ICONS.note, badge: openProposalCount },
+    { key: 'settings', label: '設定', icon: ICONS.gear },
+  ];
 
   return (
     <div id="osf-app">
-      <div className="osf-header">
-        <p className="osf-brand">ABOUT US COFFEE</p>
-        <h1>発注表</h1>
-      </div>
-      <div className="osf-tabs">
-        <button className={'osf-tab' + (activeTab === 'order' ? ' active' : '')} onClick={() => changeTab('order')}>
-          発注表
-        </button>
-        <button className={'osf-tab' + (activeTab === 'history' ? ' active' : '')} onClick={() => changeTab('history')}>
-          履歴
-        </button>
-        <button className={'osf-tab' + (activeTab === 'proposals' ? ' active' : '')} onClick={() => changeTab('proposals')}>
-          検討{openProposalCount > 0 ? `（${openProposalCount}）` : ''}
-        </button>
-        <button className={'osf-tab' + (activeTab === 'settings' ? ' active' : '')} onClick={() => changeTab('settings')}>
-          設定
-        </button>
-      </div>
-      <div className="osf-body">
-        {toast && <div className={toast.isError ? 'osf-toast-err' : 'osf-toast'}>{toast.text}</div>}
+      <header className="osf-header">
+        <div>
+          <div className="osf-brand">ABOUT US COFFEE</div>
+          <h1>{NAV.find((n) => n.key === activeTab).label}</h1>
+        </div>
+        {activeTab === 'order' && sheetSettings.sheet_id && (
+          <button className="osf-imp" onClick={() => setImporting(true)}>
+            {ICONS.down}
+            <span>シート取込</span>
+          </button>
+        )}
+      </header>
+
+      {toast && <div className={'osf-toast' + (toast.isError ? ' err' : '')}>{toast.text}</div>}
+
+      <main className="osf-body">
         {activeTab === 'order' && (
           <OrderTab
             suppliers={suppliers}
@@ -334,12 +368,11 @@ export default function App() {
             history={history}
             season={season}
             onChangeSeason={onChangeSeason}
-            sheetSettings={sheetSettings}
-            onApplySheetImport={onApplySheetImport}
             onChangeLocation={onChangeLocation}
             onLocationStockChange={onLocationStockChange}
             onQtyChange={onQtyChange}
             onCheckToggle={onCheckToggle}
+            onUnitChange={onUnitChange}
             onCompleteOrder={onCompleteOrder}
             onRequestOrder={onRequestOrder}
             onToggleDelivered={onToggleDelivered}
@@ -370,7 +403,30 @@ export default function App() {
             onDeleteLocation={onDeleteLocation}
           />
         )}
-      </div>
+      </main>
+
+      <nav className="osf-nav" aria-label="メニュー">
+        {NAV.map((n) => (
+          <button key={n.key} className={'osf-nav-btn' + (activeTab === n.key ? ' active' : '')} onClick={() => changeTab(n.key)}>
+            <span className="osf-nav-icon">
+              {n.icon}
+              {n.badge > 0 && <em>{n.badge}</em>}
+            </span>
+            <span>{n.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {importing && (
+        <SheetImportDialog
+          sheetId={sheetSettings.sheet_id}
+          lastImport={sheetSettings.sheet_last_import ? formatShortDate(sheetSettings.sheet_last_import) : null}
+          items={items}
+          supplierNames={supplierNames}
+          onApply={onApplySheetImport}
+          onClose={() => setImporting(false)}
+        />
+      )}
       <ConfirmDialog confirm={confirmState} onResolve={resolveConfirm} />
     </div>
   );

@@ -122,7 +122,9 @@ export function parseSheetRows(cfg, rows) {
     seen.add(key);
 
     const raw = stockCols.map((c) => (row[c] ?? '').trim()).find((v) => v !== '') ?? '';
-    out.push({ key, label, stock: toNum(raw) });
+    // 発注目安の元の文字（「3本」「0.5袋」など。単位の推測に使う）
+    const targetRaw = offCol >= 0 ? [row[offCol], row[offCol + 1]].map((v) => (v ?? '').trim()).find((v) => v !== '') ?? '' : '';
+    out.push({ key, label, stock: toNum(raw), targetRaw });
   }
   return out;
 }
