@@ -85,9 +85,10 @@ export default function App() {
     }, QTY_SAVE_DELAY);
   }, [showToast]);
 
-  const onChangeLocation = useCallback((itemId, locationId) => {
-    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, location_id: locationId } : it)));
-    updateItemQty(itemId, { location_id: locationId }).catch((e) => showToast(e.message, true));
+  // patch は { location_id } または { extra_location_ids }（変更した項目だけ）
+  const onChangeLocation = useCallback((itemId, patch) => {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, ...patch } : it)));
+    updateItemQty(itemId, patch).catch((e) => showToast(e.message, true));
   }, [showToast]);
 
   const onCheckToggle = useCallback((itemId, checked) => {

@@ -174,3 +174,17 @@ body {
 .osf-modal-input { margin-bottom: 16px; }
 .osf-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .osf-mini-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* Collapsible item groups / multi-location editor */
+.osf-group-head { cursor: pointer; background: var(--accent-soft); }
+.osf-group-head td { padding: 8px 10px; border-bottom: 0.5px solid var(--line); font-size: 13px; }
+.osf-group-caret { display: inline-block; width: 16px; color: var(--accent); font-size: 11px; }
+.osf-group-name { font-weight: 600; }
+.osf-group-count { margin-left: 8px; font-size: 11px; color: var(--ink-soft); }
+.osf-group-ordering { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 600; }
+.osf-group-head .osf-reorder-badge { margin-left: 6px; }
+.osf-loc-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
+.osf-loc-editor .osf-loc-select { margin-top: 0; }
+.osf-loc-chip { display: inline-flex; align-items: center; gap: 2px; padding: 1px 4px 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; }
+.osf-loc-chip button { border: none; background: transparent; color: var(--ink-soft); font-size: 12px; line-height: 1; padding: 0 3px; }
+.osf-loc-add { color: var(--accent); }

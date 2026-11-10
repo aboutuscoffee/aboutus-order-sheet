@@ -68,10 +68,12 @@ export default function OrderTab({
     [items, onlyBelow, season]
   );
 
+  // 置き場は主＋追加で複数持てる。複数ある商品は、それぞれの置き場のグループに出る
   const locationGroups = useMemo(() => {
-    const groups = locations.map((l) => ({ id: l.id, title: l.name, items: visibleItems.filter((it) => it.location_id === l.id) }));
+    const idsOf = (it) => [it.location_id, ...(it.extra_location_ids ?? [])].filter(Boolean);
+    const groups = locations.map((l) => ({ id: l.id, title: l.name, items: visibleItems.filter((it) => idsOf(it).includes(l.id)) }));
     const known = new Set(locations.map((l) => l.id));
-    groups.push({ id: 'none', title: '置き場未設定', items: visibleItems.filter((it) => !known.has(it.location_id)) });
+    groups.push({ id: 'none', title: '置き場未設定', items: visibleItems.filter((it) => !idsOf(it).some((id) => known.has(id))) });
     return groups.filter((g) => g.items.length > 0);
   }, [locations, visibleItems]);
 
@@ -168,7 +170,8 @@ export default function OrderTab({
         ) : (
           groups.map((group) => (
             <LocationCard
-              key={group.id}
+              key={`${view}:${group.id}`}
+              cardId={`${view}:${group.id}`}
               title={group.title}
               items={group.items}
               supplierNames={supplierNames}

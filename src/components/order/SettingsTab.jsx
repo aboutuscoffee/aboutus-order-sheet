@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CATEGORIES, UNCATEGORIZED } from '../../lib/constants';
+import LocationEditor from './LocationEditor';
 
 function CategorySelect({ value, onChange }) {
   return (
@@ -123,6 +124,7 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
   const [reorderBusy, setReorderBusy] = useState(item.reorder_point_busy ?? '');
   const [category, setCategory] = useState(item.category ?? null);
   const [itemNote, setItemNote] = useState(item.item_note ?? '');
+  const [itemGroup, setItemGroup] = useState(item.item_group ?? '');
 
   const commit = (overrides = {}) => {
     const next = {
@@ -136,6 +138,7 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       location_id: locationId,
       category,
       item_note: itemNote.trim() || null,
+      item_group: itemGroup.trim() || null,
       ...overrides,
     };
     onSave(next);
@@ -198,6 +201,10 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
         <input value={itemNote} onChange={(e) => setItemNote(e.target.value)} onBlur={() => commit()} placeholder="発注の条件・注意点など" />
       </div>
       <div className="osf-form-row">
+        <label>グループ</label>
+        <input value={itemGroup} onChange={(e) => setItemGroup(e.target.value)} onBlur={() => commit()} placeholder="折りたたみでまとめる名前（例: トナー）" />
+      </div>
+      <div className="osf-form-row">
         <label>発注先</label>
         <select
           value={supplierId}
@@ -215,12 +222,12 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       </div>
       <div className="osf-form-row">
         <label>置き場</label>
-        <LocationSelect
+        <LocationEditor
+          item={{ ...item, location_id: locationId }}
           locations={locations}
-          value={locationId}
-          onChange={(v) => {
-            setLocationId(v);
-            commit({ location_id: v });
+          onChange={(patch) => {
+            if ('location_id' in patch) setLocationId(patch.location_id);
+            commit(patch);
           }}
         />
       </div>
