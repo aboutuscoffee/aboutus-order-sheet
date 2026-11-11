@@ -54,7 +54,6 @@ export default function OrderTab({
   onLocationStockChange,
 }) {
   const [view, setView] = useState(loadView);
-  const [onlyBelow, setOnlyBelow] = useState(false);
   const [selSupplier, setSelSupplier] = useState(() => loadPref(SEL_SUPPLIER_KEY));
   const [selLocation, setSelLocation] = useState(() => loadPref(SEL_LOCATION_KEY));
 
@@ -81,20 +80,14 @@ export default function OrderTab({
 
   const belowTotal = useMemo(() => items.filter((it) => isBelowReorderPoint(it, season)).length, [items, season]);
 
-  // 置き場別は金額を出さない表示なので、要発注だけに絞り込んでも合計に影響しない
-  const visibleItems = useMemo(
-    () => (onlyBelow ? items.filter((it) => isBelowReorderPoint(it, season)) : items),
-    [items, onlyBelow, season]
-  );
-
   // 置き場は主＋追加で複数持てる。複数ある商品は、それぞれの置き場のグループに出る
   const locationGroups = useMemo(() => {
     const idsOf = (it) => [it.location_id, ...(it.extra_location_ids ?? [])].filter(Boolean);
-    const groups = locations.map((l) => ({ id: l.id, title: l.name, items: visibleItems.filter((it) => idsOf(it).includes(l.id)) }));
+    const groups = locations.map((l) => ({ id: l.id, title: l.name, items: items.filter((it) => idsOf(it).includes(l.id)) }));
     const known = new Set(locations.map((l) => l.id));
-    groups.push({ id: 'none', title: '置き場未設定', items: visibleItems.filter((it) => !idsOf(it).some((id) => known.has(id))) });
+    groups.push({ id: 'none', title: '置き場未設定', items: items.filter((it) => !idsOf(it).some((id) => known.has(id))) });
     return groups.filter((g) => g.items.length > 0);
-  }, [locations, visibleItems]);
+  }, [locations, items]);
 
   const countsOf = (list) => ({
     below: list.filter((it) => isBelowReorderPoint(it, season)).length,
@@ -140,13 +133,6 @@ export default function OrderTab({
         </button>
       </div>
 
-      {view === 'location' && (
-        <label className="osf-only-below">
-          <input type="checkbox" className="osf-check-input" checked={onlyBelow} onChange={(e) => setOnlyBelow(e.target.checked)} />
-          要発注のものだけ表示
-        </label>
-      )}
-
       {view === 'supplier' && (
         <>
           <FolderTabs
@@ -177,7 +163,7 @@ export default function OrderTab({
 
       {view === 'location' &&
         (locationGroups.length === 0 ? (
-          <div className="osf-empty">{onlyBelow ? '要発注のものはありません。' : '商品がありません。'}</div>
+          <div className="osf-empty">商品がありません。</div>
         ) : (
           <>
             <FolderTabs

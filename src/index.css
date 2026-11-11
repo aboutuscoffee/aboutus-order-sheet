@@ -77,7 +77,6 @@ body {
 .osf-views { display: flex; margin: 0 6px 10px; border-bottom: 1px solid #D8D0C4; }
 .osf-view-btn { flex: 1; border: none; background: none; padding: 8px 0; font-size: 13px; color: var(--ink-soft); border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .osf-view-btn.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
-.osf-only-below { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 0 6px 10px; }
 
 /* ---- カード（発注先・置き場） ---- */
 .osf-card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; margin-bottom: 16px; }
