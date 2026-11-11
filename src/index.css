@@ -254,3 +254,6 @@ body {
 .osf-ftab-below { min-width: 17px; height: 17px; padding: 0 5px; border-radius: 999px; background: var(--warn); color: #fff; font-size: 10px; font-weight: 700; line-height: 17px; text-align: center; }
 .osf-ftab-ordering { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 .osf-ftabs + .osf-card { border-top-left-radius: 0; margin-top: 0; }
+.osf-import-values { text-align: right; }
+.osf-import-asof { display: block; font-size: 10px; color: var(--ink-soft); }
+.osf-import-asof.stale { color: var(--warn); font-weight: 600; }

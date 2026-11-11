@@ -3,6 +3,19 @@ import { fetchSheetStocks } from '../../lib/sheetImport';
 import { fetchInactiveSheetKeys } from '../../lib/db';
 import { idsOf, isMultiLocation } from '../../lib/stocks';
 
+// 「11/8」のような日付が、今日から何日前か。未来の日付は前年のものとして数える
+function ageInDays(md) {
+  const m = (md ?? '').match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!m) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let d = new Date(today.getFullYear(), Number(m[1]) - 1, Number(m[2]));
+  if (d.getTime() > today.getTime() + 7 * 86400000) d = new Date(today.getFullYear() - 1, Number(m[1]) - 1, Number(m[2]));
+  return Math.round((today.getTime() - d.getTime()) / 86400000);
+}
+
+const STALE_DAYS = 21; // これより古い日付の値には「古い日付」の目印を付ける
+
 export default function SheetImportDialog({ sheetId, lastImport, items, supplierNames, onApply, onClose }) {
   const [rows, setRows] = useState(null); // シートの行 Map
   const [inactiveKeys, setInactiveKeys] = useState([]);
@@ -41,7 +54,8 @@ export default function SheetImportDialog({ sheetId, lastImport, items, supplier
       }
       // 前回取り込み後にアプリ側でも在庫を変えている（スタッフが入力した）場合は注意を出す
       const appEdited = it.stock_qty !== (it.sheet_stock ?? 0);
-      candidates.push({ item: it, sheetValue: sv, appEdited, multi: isMultiLocation(it) });
+      const age = ageInDays(row.asOf);
+      candidates.push({ item: it, sheetValue: sv, appEdited, multi: isMultiLocation(it), asOf: row.asOf, stale: age != null && age > STALE_DAYS });
     }
     const newRows = [...rows.values()].filter((r) => !keys.has(r.key));
     return { candidates, silent, newRows, linked };
@@ -85,8 +99,8 @@ export default function SheetImportDialog({ sheetId, lastImport, items, supplier
         {rows && (
           <>
             <p className="osf-modal-text">
-              シートの最新の在庫を読み込みました（対応する商品 {linked}件）。前回の取り込みから
-              <strong>シートで変わったもの</strong>が下の一覧です。反映するものにチェックを付けてください。
+              シートの在庫を読み込みました（対応する商品 {linked}件）。各商品について、シートで<strong>日付がいちばん新しい（いちばん左の）数字</strong>を使います。
+              前回の取り込みから<strong>変わったもの</strong>が下の一覧です。反映するものにチェックを付けてください。
             </p>
 
             {candidates.length === 0 ? (
@@ -109,6 +123,7 @@ export default function SheetImportDialog({ sheetId, lastImport, items, supplier
                     </span>
                     <span className="osf-import-values">
                       {c.item.stock_qty} → <strong>{c.sheetValue}</strong>
+                      {c.asOf && <small className={'osf-import-asof' + (c.stale ? ' stale' : '')}>{c.asOf}時点{c.stale ? '（古い）' : ''}</small>}
                     </span>
                   </label>
                 ))}
