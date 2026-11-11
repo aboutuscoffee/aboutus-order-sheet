@@ -99,8 +99,8 @@ export default function SheetImportDialog({ sheetId, lastImport, items, supplier
         {rows && (
           <>
             <p className="osf-modal-text">
-              シートの在庫を読み込みました（対応する商品 {linked}件）。各商品について、シートで<strong>日付がいちばん新しい（いちばん左の）数字</strong>を使います。
-              前回の取り込みから<strong>変わったもの</strong>が下の一覧です。反映するものにチェックを付けてください。
+              シートの在庫を読み込みました（対応する商品 {linked}件）。日付がいちばん新しい（いちばん左の）列の在庫を使います。
+              その列がまだ空欄の商品は「まだ数えていない」ものとして、取り込みません。前回の取り込みから<strong>変わったもの</strong>が下の一覧です。反映するものにチェックを付けてください。
             </p>
 
             {candidates.length === 0 ? (

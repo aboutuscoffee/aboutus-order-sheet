@@ -1,6 +1,6 @@
 // 二条城 発注表（Google スプレッドシート）から、商品ごとの「最新の在庫」を読み取る。
-// 最新の在庫 = その商品の行で、日付の列を左（新しい日付）から順に見て、最初に数字が入っているもの。
-// （左ほど新しい日付。最新の列が空欄の商品は、その次に新しい日付の値を使う。どの日付の値かは asOf で返す）
+// 最新の在庫 = 日付が最も新しい（いちばん左の）列の在庫数。その列が空欄の商品は「まだ数えていない」ものとして値なし（null）にする。
+// 古い日付の値で埋めない（例: 発注日の朝は新しい日付の列を作っただけで、まだ数えていないので、数日前の値を最新とは見なさない）。
 // シート → アプリの一方通行。シートへの書き込みはしない。
 // シートは「リンクを知っている全員が閲覧可」の設定なので、ログインなしで gviz の CSV として読める。
 
@@ -10,8 +10,8 @@ export const SHEET_TABS = [
   { tab: 'タカナシ', single: true, dateRow: 1, dateMinCol: 3, firstDataRow: 4 },
   { tab: 'Food・Drink関連', dateRow: 0, dateMinCol: 4 },
   { tab: '備品類', dateRow: 0, dateMinCol: 4 },
-  // 澤野井さんのタブは先頭の「最新更新日」の2列（右の方が新しい日付）に直近の在庫が入り、その右に日付ごとの列が続く。
-  // 新しい順に 右の列→左の列→日付ごとの列 と見ていく
+  // 澤野井さんのタブは先頭に「最新更新日」の2列（右の方が新しい日付）があり、直近の在庫が入る。
+  // 右の列を先に見て、空欄なら左の列を使う（その右に続く日付ごとの列は過去の記録なので使わない）
   { tab: '澤野井さん発注', dateRow: 1, dateMinCol: 5, fixedStockCols: [3, 2], titles: ['インフォメーションカード', 'SOSOGU', 'オンラインインフォメーションカード', 'TOKINOHA'] },
 ];
 
@@ -90,11 +90,11 @@ export function parseSheetRows(cfg, rows) {
     if (i >= 0) offCol = i;
   }
 
-  // 在庫が入る列を、日付が新しい順（左から）に並べる。asOf の表示のため、列ごとの日付の文字も控える
+  // 在庫を読む列。通常は「日付がいちばん新しい列」（最初の日付の見出しの列）だけ。澤野井さんのタブは固定の2列
   const header = rows[cfg.dateRow ?? 0] ?? [];
   const isDate = (c) => /^\d{1,2}\/\d{1,2}$/.test((c ?? '').trim());
   const dated = header.map((c, i) => i).filter((i) => i >= cfg.dateMinCol && isDate(header[i]));
-  const stockCols = [...(cfg.fixedStockCols ?? []), ...dated];
+  const stockCols = cfg.fixedStockCols ?? dated.slice(0, 1);
 
   let section = cfg.single ? cfg.tab : null;
   let prevName = '';
@@ -122,7 +122,7 @@ export function parseSheetRows(cfg, rows) {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    // 左から見て、最初に数字になるセルを使う（空欄・「発注済み」などの文字は飛ばす）
+    // 読む列のうち、最初に数字になるセルを使う（空欄・「発注済み」などの文字は値なし）
     let stock = null;
     let asOf = '';
     for (const c of stockCols) {
