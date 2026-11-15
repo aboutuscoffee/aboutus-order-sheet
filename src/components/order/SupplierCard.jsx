@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { yen, formatShortDate, isBelowReorderPoint, checkDaysLabel } from '../../lib/format';
 import RequestDialog from './RequestDialog';
 import ItemRow from './ItemRow';
-import { GroupedRows } from './ItemGroups';
+import { GroupedRows, GroupHeader, useCollapsedSections } from './ItemGroups';
+import { idsOf } from '../../lib/stocks';
 
 // 発注先ごとのカード。商品行の下に「合計・送料無料ライン・お願い・発注済み」のバーがつく
 // （カードが画面に見えている間は、バーは下のタブの上に固定される）
@@ -13,6 +14,7 @@ export default function SupplierCard({
   lastOrder,
   season,
   onQtyChange,
+  onLocationStockChange,
   onCheckToggle,
   onUnitChange,
   onChangeLocation,
@@ -42,14 +44,25 @@ export default function SupplierCard({
     }
   };
 
-  const renderRow = (it) => (
+  // 置き場ごとにまとめる。置き場が複数ある商品は、それぞれの置き場に出る（在庫は置き場ごとに入力）
+  const [collapsed, toggleSection] = useCollapsedSections();
+  const sections = useMemo(() => {
+    const known = new Set(locations.map((l) => l.id));
+    const list = locations.map((l) => ({ id: l.id, name: l.name, locationId: l.id, items: items.filter((it) => idsOf(it).includes(l.id)) }));
+    list.push({ id: 'none', name: '置き場未設定', locationId: undefined, items: items.filter((it) => !idsOf(it).some((id) => known.has(id))) });
+    return list.filter((s) => s.items.length > 0);
+  }, [locations, items]);
+
+  const renderRowIn = (locationId) => (it) => (
     <ItemRow
       key={it.id}
       item={it}
-      mode="supplier"
+      mode="location"
+      locationId={locationId}
       locations={locations}
       season={season}
       onQtyChange={onQtyChange}
+      onLocationStockChange={onLocationStockChange}
       onCheckToggle={onCheckToggle}
       onUnitChange={onUnitChange}
       onChangeLocation={onChangeLocation}
@@ -75,7 +88,17 @@ export default function SupplierCard({
       </div>
 
       <div className="osf-rows">
-        <GroupedRows items={items} cardId={`supplier:${supplier.id}`} season={season} renderRow={renderRow} />
+        {sections.map((sec) => {
+          const open = !collapsed[`${supplier.id}|${sec.id}`];
+          return (
+            <div key={sec.id}>
+              <GroupHeader group={{ name: sec.name, items: sec.items }} expanded={open} onToggle={() => toggleSection(`${supplier.id}|${sec.id}`)} season={season} />
+              {open && (
+                <GroupedRows items={sec.items} cardId={`supplier:${supplier.id}|${sec.id}`} season={season} renderRow={renderRowIn(sec.locationId)} />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="osf-sumbar">

@@ -81,3 +81,27 @@ export function GroupedRows({ items, cardId, season, renderRow }) {
     </>
   );
 }
+
+// 発注先カードの中の「置き場ごとのまとまり」。こちらは最初は開いていて、閉じた状態を端末に記憶する
+const LOC_KEY = 'osf-collapsed-locations';
+
+export function useCollapsedSections() {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(LOC_KEY) ?? '{}');
+    } catch {
+      return {};
+    }
+  });
+  const toggle = (id) =>
+    setCollapsed((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem(LOC_KEY, JSON.stringify(next));
+      } catch {
+        // 記憶できなくても開閉は動くので無視する
+      }
+      return next;
+    });
+  return [collapsed, toggle];
+}

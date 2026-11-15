@@ -14,7 +14,6 @@ export default function ItemRow({
   item,
   mode,
   locationId,
-  supplierName,
   locations,
   season,
   onQtyChange,
@@ -34,7 +33,7 @@ export default function ItemRow({
   const locationNames = Object.fromEntries(locations.map((l) => [l.id, l.name]));
 
   const sub = [
-    mode === 'location' ? supplierName : item.unit_price > 0 ? yen(item.unit_price) : null,
+    item.unit_price > 0 ? yen(item.unit_price) : null,
     item.unit,
     aim != null ? `目安 ${aim}` : null,
   ]
