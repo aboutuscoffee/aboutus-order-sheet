@@ -134,6 +134,7 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
   const [reorderBusy, setReorderBusy] = useState(item.reorder_point_busy ?? '');
   const [stockUnit, setStockUnit] = useState(item.stock_unit ?? '');
   const [orderUnit, setOrderUnit] = useState(item.order_unit ?? '');
+  const [minOrder, setMinOrder] = useState(item.min_order_qty ?? '');
   const [itemNote, setItemNote] = useState(item.item_note ?? '');
   const [itemGroup, setItemGroup] = useState(item.item_group ?? '');
 
@@ -149,6 +150,7 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       location_id: locationId,
       stock_unit: stockUnit.trim() || null,
       order_unit: orderUnit.trim() || null,
+      min_order_qty: numOrNull(minOrder),
       item_note: itemNote.trim() || null,
       item_group: itemGroup.trim() || null,
       ...overrides,
@@ -206,6 +208,10 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
         <div className="osf-form-row">
           <label>発注の単位</label>
           <input value={orderUnit} onChange={(e) => setOrderUnit(e.target.value)} onBlur={() => commit()} placeholder="箱・袋 など" />
+        </div>
+        <div className="osf-form-row">
+          <label>最低発注数</label>
+          <input type="number" min="0" step="any" value={minOrder} onChange={(e) => setMinOrder(e.target.value)} onBlur={() => commit()} placeholder="未設定" />
         </div>
       </div>
       <div className="osf-form-row">

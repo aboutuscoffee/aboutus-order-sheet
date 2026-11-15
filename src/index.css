@@ -264,3 +264,8 @@ body {
 .osf-day { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-size: 13px; cursor: pointer; padding: 0; }
 .osf-day.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
 .osf-hint { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+
+/* 発注の単位は固定表示・最低発注数 */
+.osf-unit-fixed { font-size: 11px; color: #6F675D; padding: 0 1px; white-space: nowrap; }
+.osf-ir-half.under { box-shadow: inset 0 -2px 0 var(--warn); }
+.osf-lot-warn { margin: 4px 8px 0; font-size: 11px; color: var(--warn); }

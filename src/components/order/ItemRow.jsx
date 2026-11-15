@@ -29,6 +29,8 @@ export default function ItemRow({
   const perLocation = multi && mode === 'location' && locationId ? stocksByLocation(item) : null;
   const stockValue = perLocation ? (item.stock_qty == null ? null : perLocation[locationId] ?? 0) : item.stock_qty;
   const usage = usageOf(item);
+  // 入れた発注数が最低発注数に届いていないとき知らせる（入力は止めない）
+  const underMin = item.min_order_qty != null && (item.order_qty || 0) > 0 && item.order_qty < item.min_order_qty;
   const stockLocked = multi && !perLocation;
   const locationNames = Object.fromEntries(locations.map((l) => [l.id, l.name]));
 
@@ -36,6 +38,7 @@ export default function ItemRow({
     item.unit_price > 0 ? yen(item.unit_price) : null,
     item.unit,
     aim != null ? `目安 ${aim}` : null,
+    item.min_order_qty != null ? `最低 ${item.min_order_qty}${item.order_unit ?? ''}` : null,
   ]
     .filter(Boolean)
     .join(' ・ ');
@@ -78,12 +81,17 @@ export default function ItemRow({
           />
           <UnitPicker label="在庫" value={item.stock_unit} onChange={(u) => onUnitChange(item.id, 'stock_unit', u)} />
         </div>
-        <div className="osf-ir-half">
+        <div className={'osf-ir-half' + (underMin ? ' under' : '')}>
           <small>発注</small>
           <NumInput value={item.order_qty} ariaLabel={`${item.name}の発注数`} onCommit={(t) => onQtyChange(item.id, 'order_qty', t)} />
-          <UnitPicker label="発注" value={item.order_unit} onChange={(u) => onUnitChange(item.id, 'order_unit', u)} />
+          {/* 発注の単位は固定（設定タブで決める）。最低ロットをわかりやすくするため、行では変えられない */}
+          <span className="osf-unit-fixed" title="発注の単位（設定タブで変更）">{item.order_unit || '—'}</span>
         </div>
       </div>
+
+      {underMin && (
+        <div className="osf-lot-warn">最低発注数は {item.min_order_qty}{item.order_unit ?? ''} です</div>
+      )}
 
       {open && (
         <div className="osf-ir-more">
