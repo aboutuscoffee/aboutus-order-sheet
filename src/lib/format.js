@@ -16,5 +16,18 @@ export function currentReorderPoint(item, season) {
 // 発注目安が設定されていて、在庫がそれを下回っているか
 export function isBelowReorderPoint(item, season) {
   const point = currentReorderPoint(item, season);
-  return point != null && (item.stock_qty || 0) < point;
+  // まだ数えていない（空欄）ものは判定しない
+  return point != null && item.stock_qty != null && item.stock_qty < point;
+}
+
+// 出数 = 前回の在庫 + 前回の発注数 − 今回の在庫（前回の在庫か今回の在庫がないときは null）
+export function usageOf(item) {
+  if (item.stock_qty == null || item.prev_stock == null) return null;
+  return Math.round((item.prev_stock + (item.prev_order || 0) - item.stock_qty) * 1000) / 1000;
+}
+
+export const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+export function checkDaysLabel(days) {
+  return (days ?? []).slice().sort((a, b) => a - b).map((d) => WEEKDAYS[d]).join('・');
 }

@@ -18,6 +18,7 @@ import {
   updateItemQty,
   updateHistoryDelivery,
   completeOrder,
+  rolloverStock,
 } from './lib/db';
 import { requestOrder } from './lib/todo';
 import { redistribute, stocksByLocation, sumStocks } from './lib/stocks';
@@ -77,7 +78,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchAll(), fetchHistory(), fetchProposals(), fetchSeason(), fetchSheetSettings()])
+    // 自動実行の取りこぼしがあれば先に補ってから読み込む（失敗しても読み込みは続ける）
+    rolloverStock()
+      .catch(() => 0)
+      .then(() => Promise.all([fetchAll(), fetchHistory(), fetchProposals(), fetchSeason(), fetchSheetSettings()])
       .then(([{ suppliers, items, locations }, history, proposals, season, sheetSettings]) => {
         setSheetSettings(sheetSettings);
         setSuppliers(suppliers);
@@ -86,7 +90,7 @@ export default function App() {
         setHistory(history);
         setProposals(proposals);
         setSeason(season);
-      })
+      }))
       .catch((e) => setError(e.message));
   }, []);
 
@@ -96,7 +100,8 @@ export default function App() {
   }, []);
 
   const onQtyChange = useCallback((itemId, field, value) => {
-    const num = value === '' ? 0 : Math.max(0, Number(value));
+    // 在庫は空欄（未入力）にできる。発注数は空欄なら0
+    const num = value === '' ? (field === 'stock_qty' ? null : 0) : Math.max(0, Number(value));
     setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, [field]: num } : it)));
 
     clearTimeout(saveTimers.current[itemId + field]);

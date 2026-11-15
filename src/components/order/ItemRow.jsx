@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { yen, isBelowReorderPoint, currentReorderPoint } from '../../lib/format';
+import { yen, isBelowReorderPoint, currentReorderPoint, usageOf } from '../../lib/format';
 import { isMultiLocation, stocksByLocation } from '../../lib/stocks';
 import NumInput from './NumInput';
 import UnitPicker from './UnitPicker';
@@ -28,7 +28,8 @@ export default function ItemRow({
   const aim = currentReorderPoint(item, season);
   const multi = isMultiLocation(item);
   const perLocation = multi && mode === 'location' && locationId ? stocksByLocation(item) : null;
-  const stockValue = perLocation ? perLocation[locationId] ?? 0 : item.stock_qty;
+  const stockValue = perLocation ? (item.stock_qty == null ? null : perLocation[locationId] ?? 0) : item.stock_qty;
+  const usage = usageOf(item);
   const stockLocked = multi && !perLocation;
   const locationNames = Object.fromEntries(locations.map((l) => [l.id, l.name]));
 
@@ -47,6 +48,11 @@ export default function ItemRow({
           <div className="osf-ir-name">
             <span className="osf-ir-nm">{item.name}</span>
             {below && <span className="osf-reorder-badge">要発注</span>}
+            {usage != null && (
+              <span className="osf-usage" title={`前回の在庫 ${item.prev_stock} + 発注 ${item.prev_order || 0} − 今回の在庫 ${item.stock_qty}`}>
+                出数 {usage}
+              </span>
+            )}
             <span className="osf-ir-caret">{open ? '▴' : '▾'}</span>
           </div>
           <div className="osf-ir-sub">{sub}</div>
@@ -65,6 +71,7 @@ export default function ItemRow({
           <small>在庫</small>
           <NumInput
             value={stockValue}
+            placeholder="未入力"
             ariaLabel={`${item.name}の在庫`}
             disabled={stockLocked}
             title={stockLocked ? '置き場が複数あるので、置き場別の表示で置き場ごとに入力します（これは合計）' : undefined}
@@ -83,11 +90,17 @@ export default function ItemRow({
         <div className="osf-ir-more">
           {multi && (
             <div className="osf-stock-breakdown">
-              合計 {item.stock_qty}（
+              合計 {item.stock_qty ?? '未入力'}（
               {Object.entries(stocksByLocation(item))
                 .map(([id, qty]) => `${locationNames[id] ?? '?'} ${qty}`)
                 .join(' / ')}
               ）
+            </div>
+          )}
+          {item.prev_stock != null && (
+            <div className="osf-stock-breakdown">
+              前回 在庫 {item.prev_stock}・発注 {item.prev_order || 0}
+              {usage != null ? ` → 出数 ${usage}` : '（今回の在庫を入れると出数が出ます）'}
             </div>
           )}
           {item.item_note && <div className="osf-item-memo">{item.item_note}</div>}

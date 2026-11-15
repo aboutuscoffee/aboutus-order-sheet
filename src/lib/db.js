@@ -101,7 +101,9 @@ export async function fetchHistory() {
 }
 
 export async function upsertSupplier(supplier) {
-  const { data, error } = await supabase.from('os_suppliers').upsert(supplier).select().single();
+  // last_rollover_at は自動クリアが管理する値なので、設定の保存では上書きしない
+  const { last_rollover_at: _ignored, ...fields } = supplier;
+  const { data, error } = await supabase.from('os_suppliers').upsert(fields).select().single();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -112,7 +114,9 @@ export async function deleteSupplier(id) {
 }
 
 export async function upsertItem(item) {
-  const { data, error } = await supabase.from('os_items').upsert(item).select().single();
+  // 前回の在庫・発注数と今の期間の発注数は自動クリア／発注済みが管理する値なので、設定の保存では上書きしない
+  const { cycle_order_qty: _c, prev_stock: _s, prev_order: _o, ...fields } = item;
+  const { data, error } = await supabase.from('os_items').upsert(fields).select().single();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -152,11 +156,24 @@ export async function completeOrder(supplier, orderedItems, note) {
     .single();
   if (error) throw new Error(error.message);
 
-  const { error: resetError } = await supabase
-    .from('os_items')
-    .update({ order_qty: 0, stock_checked: false })
-    .in('id', orderedItems.map((it) => it.id));
-  if (resetError) throw new Error(resetError.message);
+  // 発注数をリセットし、今の期間に発注した数として積み上げる（出数の計算・記録に使う）
+  const results = await Promise.all(
+    orderedItems.map((it) =>
+      supabase
+        .from('os_items')
+        .update({ order_qty: 0, stock_checked: false, cycle_order_qty: (it.cycle_order_qty || 0) + (it.order_qty || 0) })
+        .eq('id', it.id),
+    ),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed) throw new Error(failed.error.message);
 
   return data;
+}
+
+// チェック日になっていた発注先の在庫を空欄に戻す（毎朝の自動実行の取りこぼしを、アプリを開いたときに補う）
+export async function rolloverStock() {
+  const { data, error } = await supabase.rpc('os_rollover_stock');
+  if (error) throw new Error(error.message);
+  return data ?? 0;
 }

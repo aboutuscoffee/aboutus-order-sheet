@@ -21,12 +21,12 @@ export function cleanNumberText(raw) {
   return t.replace(/^0+(?=\d)/, '');
 }
 
-export default function NumInput({ value, onCommit, disabled, title, ariaLabel, className = '' }) {
-  const [text, setText] = useState(String(value ?? 0));
+export default function NumInput({ value, onCommit, disabled, title, ariaLabel, placeholder, className = '' }) {
+  const [text, setText] = useState(value == null ? '' : String(value));
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    if (!focused) setText(String(value ?? 0));
+    if (!focused) setText(value == null ? '' : String(value));
   }, [value, focused]);
 
   return (
@@ -40,6 +40,7 @@ export default function NumInput({ value, onCommit, disabled, title, ariaLabel, 
       disabled={disabled}
       title={title}
       aria-label={ariaLabel}
+      placeholder={placeholder}
       onFocus={(e) => {
         setFocused(true);
         const el = e.target;
@@ -49,7 +50,7 @@ export default function NumInput({ value, onCommit, disabled, title, ariaLabel, 
       onClick={(e) => caretToEnd(e.target)}
       onBlur={() => {
         setFocused(false);
-        setText(String(value ?? 0));
+        setText(value == null ? '' : String(value));
       }}
       onChange={(e) => {
         const t = cleanNumberText(e.target.value);

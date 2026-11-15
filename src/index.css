@@ -257,3 +257,10 @@ body {
 .osf-import-values { text-align: right; }
 .osf-import-asof { display: block; font-size: 10px; color: var(--ink-soft); }
 .osf-import-asof.stale { color: var(--warn); font-weight: 600; }
+
+/* 出数・チェック日 */
+.osf-usage { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; color: var(--accent); border: 1px solid #B9CDBC; background: #EEF3EE; font-size: 10px; font-weight: 700; line-height: 1.7; white-space: nowrap; }
+.osf-days { display: flex; gap: 4px; flex-wrap: wrap; }
+.osf-day { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-size: 13px; cursor: pointer; padding: 0; }
+.osf-day.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.osf-hint { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }

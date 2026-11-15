@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import LocationEditor from './LocationEditor';
+import { WEEKDAYS } from '../../lib/format';
 
 function numOrNull(v) {
   return v === '' ? null : Number(v);
@@ -42,6 +43,29 @@ function SupplierRow({ supplier, onSave, onDelete }) {
         <label>メモ</label>
         <input value={note} onChange={(e) => setNote(e.target.value)} onBlur={commit} />
       </div>
+      <div className="osf-form-row">
+        <label>チェック日</label>
+        <div className="osf-days">
+          {WEEKDAYS.map((w, d) => {
+            const on = (supplier.check_days ?? []).includes(d);
+            return (
+              <button
+                key={d}
+                type="button"
+                className={'osf-day' + (on ? ' on' : '')}
+                aria-pressed={on}
+                onClick={() => {
+                  const cur = supplier.check_days ?? [];
+                  onSave({ ...supplier, check_days: on ? cur.filter((x) => x !== d) : [...cur, d].sort((a, b) => a - b) });
+                }}
+              >
+                {w}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="osf-hint">選んだ曜日の朝4時に、この発注先の在庫が空欄に戻ります（記録は残ります）</div>
     </div>
   );
 }

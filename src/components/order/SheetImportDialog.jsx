@@ -53,7 +53,7 @@ export default function SheetImportDialog({ sheetId, lastImport, items, supplier
         continue;
       }
       // 前回取り込み後にアプリ側でも在庫を変えている（スタッフが入力した）場合は注意を出す
-      const appEdited = it.stock_qty !== (it.sheet_stock ?? 0);
+      const appEdited = it.stock_qty != null && it.stock_qty !== (it.sheet_stock ?? 0);
       const age = ageInDays(row.asOf);
       candidates.push({ item: it, sheetValue: sv, appEdited, multi: isMultiLocation(it), asOf: row.asOf, stale: age != null && age > STALE_DAYS });
     }
@@ -122,7 +122,7 @@ export default function SheetImportDialog({ sheetId, lastImport, items, supplier
                       {c.multi && <span className="osf-import-warn">置き場が複数（内訳はメインの置き場にまとめます）</span>}
                     </span>
                     <span className="osf-import-values">
-                      {c.item.stock_qty} → <strong>{c.sheetValue}</strong>
+                      {c.item.stock_qty ?? '未入力'} → <strong>{c.sheetValue}</strong>
                       {c.asOf && <small className={'osf-import-asof' + (c.stale ? ' stale' : '')}>{c.asOf}時点{c.stale ? '（古い）' : ''}</small>}
                     </span>
                   </label>
