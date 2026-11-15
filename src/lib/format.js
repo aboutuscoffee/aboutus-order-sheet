@@ -33,3 +33,20 @@ export const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 export function checkDaysLabel(days) {
   return (days ?? []).slice().sort((a, b) => a - b).map((d) => WEEKDAYS[d]).join('・');
 }
+
+const fmtNum = (n) => (Math.round(n * 1000) / 1000).toLocaleString('ja-JP');
+
+// 発注 n 回で届く量の表記。届く実数（例: 8,000枚）と、在庫の単位（例: 8箱）の両方を出す
+//  例: 「8,000枚（8箱）」。どちらか片方だけ設定されていれば、そのほうだけ出す
+export function arrivalLabel(item, n = 1) {
+  const arr = item.arrival_qty > 0 ? `${fmtNum(item.arrival_qty * n)}${item.arrival_unit ?? ''}` : null;
+  const pack = item.order_pack_qty > 0 ? `${fmtNum(item.order_pack_qty * n)}${item.stock_unit ?? ''}` : null;
+  if (arr && pack) return arr === pack ? arr : `${arr}（${pack}）`;
+  return arr ?? pack;
+}
+
+// 在庫（管理の単位）が、実数でどれくらいか。例: 0.6袋 → 約60枚（1発注＝1袋＝100枚のとき）
+export function stockApprox(item) {
+  if (!(item.arrival_qty > 0) || !(item.order_pack_qty > 0) || !(item.stock_qty > 0) || !item.arrival_unit) return null;
+  return `${fmtNum((item.stock_qty * item.arrival_qty) / item.order_pack_qty)}${item.arrival_unit}`;
+}

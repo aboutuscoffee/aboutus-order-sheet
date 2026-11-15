@@ -135,6 +135,8 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
   const [stockUnit, setStockUnit] = useState(item.stock_unit ?? '');
   const [orderUnit, setOrderUnit] = useState(item.order_unit ?? '');
   const [packQty, setPackQty] = useState(item.order_pack_qty ?? '');
+  const [arrivalQty, setArrivalQty] = useState(item.arrival_qty ?? '');
+  const [arrivalUnit, setArrivalUnit] = useState(item.arrival_unit ?? '');
   const [itemNote, setItemNote] = useState(item.item_note ?? '');
   const [itemGroup, setItemGroup] = useState(item.item_group ?? '');
 
@@ -151,6 +153,8 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
       stock_unit: stockUnit.trim() || null,
       order_unit: orderUnit.trim() || null,
       order_pack_qty: numOrNull(packQty),
+      arrival_qty: numOrNull(arrivalQty),
+      arrival_unit: arrivalUnit.trim() || null,
       item_note: itemNote.trim() || null,
       item_group: itemGroup.trim() || null,
       ...overrides,
@@ -209,9 +213,19 @@ function ItemRow({ item, suppliers, locations, onSave, onDelete }) {
           <label>発注の単位</label>
           <input value={orderUnit} onChange={(e) => setOrderUnit(e.target.value)} onBlur={() => commit()} placeholder="箱・袋 など" />
         </div>
+      </div>
+      <div className="osf-form-grid">
         <div className="osf-form-row">
-          <label>1{orderUnit || '発注単位'}で届く数（{stockUnit || '在庫の単位'}）</label>
-          <input type="number" min="0" step="any" value={packQty} onChange={(e) => setPackQty(e.target.value)} onBlur={() => commit()} placeholder="例: 2" />
+          <label>1{orderUnit || '発注'}で届く量（実数）</label>
+          <input type="number" min="0" step="any" value={arrivalQty} onChange={(e) => setArrivalQty(e.target.value)} onBlur={() => commit()} placeholder="例: 8000" />
+        </div>
+        <div className="osf-form-row">
+          <label>実数の単位</label>
+          <input value={arrivalUnit} onChange={(e) => setArrivalUnit(e.target.value)} onBlur={() => commit()} placeholder="枚・本 など" />
+        </div>
+        <div className="osf-form-row">
+          <label>1{orderUnit || '発注'}＝在庫の単位で（{stockUnit || '在庫の単位'}）</label>
+          <input type="number" min="0" step="any" value={packQty} onChange={(e) => setPackQty(e.target.value)} onBlur={() => commit()} placeholder="例: 8" />
         </div>
       </div>
       <div className="osf-form-row">

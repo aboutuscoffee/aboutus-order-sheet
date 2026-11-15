@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { yen, isBelowReorderPoint, currentReorderPoint, usageOf } from '../../lib/format';
+import { yen, isBelowReorderPoint, currentReorderPoint, usageOf, arrivalLabel, stockApprox } from '../../lib/format';
 import { isMultiLocation, stocksByLocation } from '../../lib/stocks';
 import NumInput from './NumInput';
 import UnitPicker from './UnitPicker';
@@ -29,9 +29,10 @@ export default function ItemRow({
   const perLocation = multi && mode === 'location' && locationId ? stocksByLocation(item) : null;
   const stockValue = perLocation ? (item.stock_qty == null ? null : perLocation[locationId] ?? 0) : item.stock_qty;
   const usage = usageOf(item);
-  // 発注1単位で届く数（例: 1セット＝2個）。みんなが「頼んだらいくつ来るか」を把握するための表示
-  const pack = item.order_pack_qty > 0 ? Number(item.order_pack_qty) : null;
-  const incoming = pack && (item.order_qty || 0) > 0 ? Math.round(item.order_qty * pack * 1000) / 1000 : null;
+  // 発注1単位で届く量（例: 1発注＝8,000枚＝8箱）。みんなが「頼んだらどれくらい来るか」を把握するための表示
+  const perOrder = arrivalLabel(item, 1);
+  const incoming = (item.order_qty || 0) > 0 ? arrivalLabel(item, item.order_qty) : null;
+  const approx = stockApprox(item);
   const stockLocked = multi && !perLocation;
   const locationNames = Object.fromEntries(locations.map((l) => [l.id, l.name]));
 
@@ -39,7 +40,7 @@ export default function ItemRow({
     item.unit_price > 0 ? yen(item.unit_price) : null,
     item.unit,
     aim != null ? `目安 ${aim}` : null,
-    pack ? `1${item.order_unit ?? ''}＝${pack}${item.stock_unit ?? ''}` : null,
+    perOrder ? `1${item.order_unit || '発注'}＝${perOrder}` : null,
   ]
     .filter(Boolean)
     .join(' ・ ');
@@ -90,9 +91,15 @@ export default function ItemRow({
         </div>
       </div>
 
-      {incoming != null && (
+      {(incoming != null || approx) && (
         <div className="osf-incoming">
-          {item.order_qty}{item.order_unit ?? ''}頼むと <b>{incoming}{item.stock_unit ?? ''}</b> 届きます
+          {approx && <span>在庫 {item.stock_qty}{item.stock_unit ?? ''} ≒ {approx}</span>}
+          {approx && incoming != null && '　・　'}
+          {incoming != null && (
+            <span>
+              {item.order_qty}{item.order_unit ?? ''}頼むと <b>{incoming}</b> 届きます
+            </span>
+          )}
         </div>
       )}
 
