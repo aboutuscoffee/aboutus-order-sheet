@@ -23,7 +23,9 @@ export function isBelowReorderPoint(item, season) {
 // 出数 = 前回の在庫 + 前回の発注数 − 今回の在庫（前回の在庫か今回の在庫がないときは null）
 export function usageOf(item) {
   if (item.stock_qty == null || item.prev_stock == null) return null;
-  return Math.round((item.prev_stock + (item.prev_order || 0) - item.stock_qty) * 1000) / 1000;
+  // 発注は「発注の単位」、在庫は「在庫の単位」なので、入数（1発注で届く数）をかけて在庫の単位にそろえる
+  const pack = item.order_pack_qty > 0 ? Number(item.order_pack_qty) : 1;
+  return Math.round((item.prev_stock + (item.prev_order || 0) * pack - item.stock_qty) * 1000) / 1000;
 }
 
 export const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
