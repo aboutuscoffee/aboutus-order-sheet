@@ -52,7 +52,7 @@ export function GroupHeader({ group, expanded, onToggle, season }) {
   const ordering = group.items.filter((it) => (it.order_qty || 0) > 0).length;
   return (
     <button type="button" className="osf-group-head" onClick={onToggle} aria-expanded={expanded}>
-      <span className="osf-group-caret">{expanded ? '▼' : '▶'}</span>
+      <span className="osf-group-caret">{expanded ? '−' : '＋'}</span>
       <span className="osf-group-name">{group.name}</span>
       <span className="osf-group-count">{group.items.length}品</span>
       {below > 0 && <span className="osf-reorder-badge">要発注 {below}品</span>}

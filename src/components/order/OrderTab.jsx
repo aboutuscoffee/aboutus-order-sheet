@@ -1,30 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import SupplierCard from './SupplierCard';
 import PendingDeliveries from './PendingDeliveries';
 import FolderTabs from './FolderTabs';
 import { SEASONS } from '../../lib/constants';
 import { isBelowReorderPoint } from '../../lib/format';
 
-const SEL_SUPPLIER_KEY = 'osf-selected-supplier';
-
-function loadPref(key) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function savePref(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // 記憶できなくても切り替えは動くので無視する
-  }
-}
-
 export default function OrderTab({
   suppliers,
+  selectedSupplierId,
+  onSelectSupplier,
   items,
   locations,
   history,
@@ -39,8 +23,6 @@ export default function OrderTab({
   onChangeLocation,
   onLocationStockChange,
 }) {
-  const [selSupplier, setSelSupplier] = useState(() => loadPref(SEL_SUPPLIER_KEY));
-
   const pending = useMemo(() => history.filter((h) => !h.all_delivered), [history]);
 
   const lastOrderBySupplier = useMemo(() => {
@@ -61,7 +43,7 @@ export default function OrderTab({
   const supplierTabs = suppliers.map((s) => ({ id: s.id, label: s.name, ...countsOf(items.filter((it) => it.supplier_id === s.id)) }));
 
   // 選んでいるものが見つからない（削除された・絞り込みで空になった）ときは、先頭を表示する
-  const activeSupplier = suppliers.find((s) => s.id === selSupplier) ?? suppliers[0];
+  const activeSupplier = suppliers.find((s) => s.id === selectedSupplierId) ?? suppliers[0];
 
   if (suppliers.length === 0) {
     return <div className="osf-empty">発注先が未登録です。「設定」タブから追加してください。</div>;
@@ -90,10 +72,7 @@ export default function OrderTab({
         ariaLabel="発注先"
         tabs={supplierTabs}
         activeId={activeSupplier.id}
-        onSelect={(id) => {
-          setSelSupplier(id);
-          savePref(SEL_SUPPLIER_KEY, id);
-        }}
+        onSelect={onSelectSupplier}
       />
       <SupplierCard
         key={activeSupplier.id}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { yen, formatShortDate, isBelowReorderPoint, checkDaysLabel } from '../../lib/format';
+import { yen, formatShortDate, isBelowReorderPoint } from '../../lib/format';
 import RequestDialog from './RequestDialog';
 import ItemRow from './ItemRow';
 import { GroupedRows, GroupHeader, useCollapsedSections } from './ItemGroups';
@@ -77,9 +77,6 @@ export default function SupplierCard({
           <div className="osf-card-sub">
             {[supplier.note, threshold != null ? `送料無料 ${yen(threshold)}〜` : null].filter(Boolean).join(' ・ ')}
           </div>
-          {(supplier.check_days ?? []).length > 0 && (
-            <div className="osf-card-sub">在庫チェック日 {checkDaysLabel(supplier.check_days)}（朝4時に空欄へ）</div>
-          )}
           <div className="osf-card-sub">
             {lastOrder ? `前回発注 ${formatShortDate(lastOrder.ordered_at)}${lastOrder.note ? `　${lastOrder.note}` : ''}` : '前回発注 なし'}
           </div>

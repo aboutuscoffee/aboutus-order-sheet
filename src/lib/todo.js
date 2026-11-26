@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { yen } from './format';
 
 // aboutus-staff-todo と共有しているSupabaseの staff / tasks / notifications テーブルを使い、
-// 「発注をお願いする」を Todo アプリの個人への依頼（承認あり）として届ける。
+// 発注や購入のお願いを Todo アプリの個人への依頼（承認あり）として届ける。
 
 function todayStr() {
   const d = new Date();
@@ -21,26 +21,8 @@ export async function fetchStaff() {
   return data ?? [];
 }
 
-// 判断者の選択肢（GM・オーナー）。Todoアプリの staff テーブルを読むだけで、書き込みはしない
-export async function fetchDeciders() {
-  const { data, error } = await supabase
-    .from('staff')
-    .select('key, name, role')
-    .eq('is_active', true)
-    .in('role', ['GM', 'owner'])
-    .order('name', { ascending: true });
-  if (error) throw new Error(error.message);
-  return data ?? [];
-}
-
-export async function requestOrder({ supplier, items, note, fromStaff, toStaff }) {
-  const ordered = items.filter((it) => (it.order_qty || 0) > 0);
-  const total = ordered.reduce((sum, it) => sum + it.unit_price * it.order_qty, 0);
-  const text = `${supplier.name}の発注（${yen(total)}）`;
-  const lines = ordered.map((it) => `${it.name} × ${it.order_qty}${it.unit || ''}`);
-  const comment = [...lines, note ? `備考: ${note}` : null, '発注表: https://aboutuscoffee.github.io/aboutus-order-sheet/']
-    .filter(Boolean)
-    .join('\n');
+// Todoアプリの「個人への依頼（承認あり）」を1件作り、相手に通知する
+async function offerTask({ text, comment, fromStaff, toStaff, priority = 'mid' }) {
   const today = todayStr();
 
   const { error: taskError } = await supabase.from('tasks').insert({
@@ -48,7 +30,7 @@ export async function requestOrder({ supplier, items, note, fromStaff, toStaff }
     text,
     comment,
     duty: 'その他',
-    priority: 'mid',
+    priority,
     status: '',
     done: false,
     done_date: null,
@@ -82,4 +64,30 @@ export async function requestOrder({ supplier, items, note, fromStaff, toStaff }
       body: { staff_key: toStaff.key, title: 'ABOUT US STAFF TODO', body: message },
     })
     .catch((e) => console.error('push failed:', e.message));
+}
+
+const APP_URL = 'https://aboutuscoffee.github.io/aboutus-order-sheet/';
+
+export async function requestOrder({ supplier, items, note, fromStaff, toStaff }) {
+  const ordered = items.filter((it) => (it.order_qty || 0) > 0);
+  const total = ordered.reduce((sum, it) => sum + it.unit_price * it.order_qty, 0);
+  const text = `${supplier.name}の発注（${yen(total)}）`;
+  const lines = ordered.map((it) => `${it.name} × ${it.order_qty}${it.unit || ''}`);
+  const comment = [...lines, note ? `備考: ${note}` : null, `発注表: ${APP_URL}`].filter(Boolean).join('\n');
+  await offerTask({ text, comment, fromStaff, toStaff });
+}
+
+// 検討タブ（買ってほしい物）の購入をお願いする
+export async function requestPurchase({ wish, fromStaff, toStaff }) {
+  const text = `購入のお願い：${wish.name}`;
+  const comment = [
+    `数量: ${wish.quantity}${wish.price != null ? `　単価: ${yen(wish.price)}（合計 ${yen(wish.price * wish.quantity)}）` : '　金額未定'}`,
+    wish.purpose ? `用途: ${wish.purpose}` : null,
+    wish.reason ? `備考: ${wish.reason}` : null,
+    wish.url ? `購入先: ${wish.url}` : null,
+    `発注表の「検討」タブ: ${APP_URL}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  await offerTask({ text, comment, fromStaff, toStaff, priority: wish.urgent ? 'high' : 'mid' });
 }

@@ -48,23 +48,33 @@ export async function saveSeason(season) {
   if (error) throw new Error(error.message);
 }
 
-export async function fetchProposals() {
-  const { data, error } = await supabase
-    .from('os_proposals')
-    .select('*')
-    .order('created_at', { ascending: false });
+// 検討タブは「買ってほしい物リスト」アプリと同じテーブル(wl_items)を使う
+export async function fetchWishes() {
+  const { data, error } = await supabase.from('wl_items').select('*').order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-export async function upsertProposal(proposal) {
-  const { data, error } = await supabase.from('os_proposals').upsert(proposal).select().single();
+export async function createWish(fields) {
+  const { data, error } = await supabase.from('wl_items').insert(fields).select().single();
   if (error) throw new Error(error.message);
   return data;
 }
 
-export async function deleteProposal(id) {
-  const { error } = await supabase.from('os_proposals').delete().eq('id', id);
+// 変更した項目だけを送る（もう一方のアプリの変更を上書きしないため）
+export async function updateWish(id, fields) {
+  const { data, error } = await supabase
+    .from('wl_items')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteWish(id) {
+  const { error } = await supabase.from('wl_items').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
 

@@ -2,13 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchAll,
   fetchHistory,
-  fetchProposals,
+  fetchWishes,
+  createWish,
+  updateWish,
+  deleteWish,
   fetchSeason,
   saveSeason,
   fetchSheetSettings,
   saveSetting,
-  upsertProposal,
-  deleteProposal,
   upsertSupplier,
   deleteSupplier,
   upsertItem,
@@ -20,7 +21,7 @@ import {
   completeOrder,
   rolloverStock,
 } from './lib/db';
-import { requestOrder } from './lib/todo';
+import { requestOrder, requestPurchase } from './lib/todo';
 import { redistribute, stocksByLocation, sumStocks } from './lib/stocks';
 import OrderTab from './components/order/OrderTab';
 import SettingsTab from './components/order/SettingsTab';
@@ -28,7 +29,7 @@ import HistoryTab from './components/order/HistoryTab';
 import ProposalsTab from './components/order/ProposalsTab';
 import ConfirmDialog from './components/order/ConfirmDialog';
 import SheetImportDialog from './components/order/SheetImportDialog';
-import { formatShortDate } from './lib/format';
+import { formatShortDate, checkDaysLabel } from './lib/format';
 
 const QTY_SAVE_DELAY = 500;
 
@@ -50,7 +51,7 @@ export default function App() {
   const [items, setItems] = useState(null);
   const [locations, setLocations] = useState(null);
   const [history, setHistory] = useState(null);
-  const [proposals, setProposals] = useState(null);
+  const [wishes, setWishes] = useState(null);
   const [season, setSeason] = useState(null);
   const [sheetSettings, setSheetSettings] = useState(null);
   const [error, setError] = useState(null);
@@ -58,6 +59,13 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [selSupplier, setSelSupplier] = useState(() => {
+    try {
+      return localStorage.getItem('osf-selected-supplier');
+    } catch {
+      return null;
+    }
+  });
   const saveTimers = useRef({});
   const itemsRef = useRef(null); // 保存する内容を最新の状態から作るため
   const confirmResolver = useRef(null);
@@ -81,14 +89,14 @@ export default function App() {
     // 自動実行の取りこぼしがあれば先に補ってから読み込む（失敗しても読み込みは続ける）
     rolloverStock()
       .catch(() => 0)
-      .then(() => Promise.all([fetchAll(), fetchHistory(), fetchProposals(), fetchSeason(), fetchSheetSettings()])
-      .then(([{ suppliers, items, locations }, history, proposals, season, sheetSettings]) => {
+      .then(() => Promise.all([fetchAll(), fetchHistory(), fetchWishes(), fetchSeason(), fetchSheetSettings()])
+      .then(([{ suppliers, items, locations }, history, wishes, season, sheetSettings]) => {
         setSheetSettings(sheetSettings);
         setSuppliers(suppliers);
         setItems(items);
         setLocations(locations);
         setHistory(history);
-        setProposals(proposals);
+        setWishes(wishes);
         setSeason(season);
       }))
       .catch((e) => setError(e.message));
@@ -215,43 +223,55 @@ export default function App() {
     }
   }, [season, showToast]);
 
-  const saveProposal = useCallback(async (proposal) => {
+  const putWish = useCallback((saved) => {
+    setWishes((prev) => (prev.some((w) => w.id === saved.id) ? prev.map((w) => (w.id === saved.id ? saved : w)) : [saved, ...prev]));
+  }, []);
+
+  // お願いする人が決まっていれば、Todoアプリに依頼を作ってから「誰にお願いしたか」を記録する
+  const assignWish = useCallback(async (wish, fromStaff, toStaff) => {
     try {
-      const saved = await upsertProposal(proposal);
-      setProposals((prev) => {
-        const exists = prev.some((p) => p.id === saved.id);
-        return exists ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev];
-      });
-      return saved;
+      await requestPurchase({ wish, fromStaff, toStaff });
+    } catch (e) {
+      showToast(`Todoへの依頼ができませんでした：${e.message}`, true);
+      return false;
+    }
+    try {
+      putWish(await updateWish(wish.id, { requested_by: fromStaff.name, assigned_to_key: toStaff.key, assigned_to_name: toStaff.name }));
+      showToast(`${toStaff.name}さんのTodoに依頼しました`);
     } catch (e) {
       showToast(e.message, true);
-      return null;
     }
-  }, [showToast]);
+    return true;
+  }, [putWish, showToast]);
 
-  const onSubmitProposal = useCallback(async (fields) => {
-    if (await saveProposal(fields)) showToast('検討をお願いしました');
-  }, [saveProposal, showToast]);
-
-  const onDecideProposal = useCallback((proposal, status, decidedBy, comment) => {
-    saveProposal({
-      ...proposal,
-      status,
-      decided_by: decidedBy,
-      decision_comment: comment,
-      decided_at: new Date().toISOString(),
-    });
-  }, [saveProposal]);
-
-  const onReopenProposal = useCallback((proposal) => {
-    saveProposal({ ...proposal, status: 'pending', decided_by: null, decision_comment: null, decided_at: null });
-  }, [saveProposal]);
-
-  const onDeleteProposal = useCallback(async (id) => {
-    if (!(await askConfirm('この検討内容を削除しますか？', '削除する'))) return;
+  const onCreateWish = useCallback(async (fields, fromStaff, toStaff) => {
+    let saved;
     try {
-      await deleteProposal(id);
-      setProposals((prev) => prev.filter((p) => p.id !== id));
+      saved = await createWish({ ...fields, requested_by: fromStaff.name });
+    } catch (e) {
+      showToast(e.message, true);
+      return false;
+    }
+    putWish(saved);
+    await assignWish(saved, fromStaff, toStaff);
+    return true;
+  }, [putWish, assignWish, showToast]);
+
+  const onUpdateWish = useCallback(async (id, fields) => {
+    try {
+      putWish(await updateWish(id, fields));
+      return true;
+    } catch (e) {
+      showToast(e.message, true);
+      return false;
+    }
+  }, [putWish, showToast]);
+
+  const onDeleteWish = useCallback(async (wish) => {
+    if (!(await askConfirm(`「${wish.name}」を削除しますか？\n買ってほしい物リストからも消えます。`, '削除する'))) return;
+    try {
+      await deleteWish(wish.id);
+      setWishes((prev) => prev.filter((w) => w.id !== wish.id));
     } catch (e) {
       showToast(e.message, true);
     }
@@ -326,6 +346,8 @@ export default function App() {
   }, [showToast, askConfirm]);
 
   const changeTab = (tab) => {
+    // 買ってほしい物リスト側で追加・変更されたものも見えるように、開くたびに読み直す
+    if (tab === 'proposals') fetchWishes().then(setWishes).catch((e) => showToast(e.message, true));
     setActiveTab(tab);
     setToast(null);
   };
@@ -333,29 +355,44 @@ export default function App() {
   if (error) {
     return <div id="osf-app"><div className="osf-body"><div className="osf-inline-err">読み込みエラー：{error}</div></div></div>;
   }
-  if (!suppliers || !items || !locations || !history || !proposals || !season || !sheetSettings) {
+  if (!suppliers || !items || !locations || !history || !wishes || !season || !sheetSettings) {
     return <div id="osf-app"><div className="osf-loading">読み込み中…</div></div>;
   }
 
-  const openProposalCount = proposals.filter((p) => p.status === 'pending' || p.status === 'on_hold').length;
+  const openWishCount = wishes.filter((w) => w.status === 'requested').length;
   const supplierNames = Object.fromEntries(suppliers.map((s) => [s.id, s.name]));
 
   const NAV = [
     { key: 'order', label: '発注表', icon: ICONS.list },
     { key: 'history', label: '履歴', icon: ICONS.clock },
-    { key: 'proposals', label: '検討', icon: ICONS.note, badge: openProposalCount },
+    { key: 'proposals', label: '検討', icon: ICONS.note, badge: openWishCount },
     { key: 'settings', label: '設定', icon: ICONS.gear },
   ];
 
+  const onSelectSupplier = (id) => {
+    setSelSupplier(id);
+    try {
+      localStorage.setItem('osf-selected-supplier', id);
+    } catch {
+      // 記憶できなくても切り替えは動くので無視する
+    }
+  };
+  const activeSupplier = suppliers.find((s) => s.id === selSupplier) ?? suppliers[0];
+
   return (
     <div id="osf-app">
+      {activeSupplier && (
+        <div className="osf-topbar">
+          {activeSupplier.name}　在庫チェック日 {checkDaysLabel(activeSupplier.check_days) || '未設定'}
+        </div>
+      )}
       <header className="osf-header">
         <div>
           <div className="osf-brand">ABOUT US COFFEE</div>
           <h1>{NAV.find((n) => n.key === activeTab).label}</h1>
         </div>
         {activeTab === 'order' && sheetSettings.sheet_id && (
-          <button className="osf-imp" onClick={() => setImporting(true)}>
+          <button className="osf-imp" aria-label="シート取込" title="シート取込" onClick={() => setImporting(true)}>
             {ICONS.down}
             <span>シート取込</span>
           </button>
@@ -368,6 +405,8 @@ export default function App() {
         {activeTab === 'order' && (
           <OrderTab
             suppliers={suppliers}
+            selectedSupplierId={selSupplier}
+            onSelectSupplier={onSelectSupplier}
             items={items}
             locations={locations}
             history={history}
@@ -385,15 +424,7 @@ export default function App() {
         )}
         {activeTab === 'history' && <HistoryTab history={history} />}
         {activeTab === 'proposals' && (
-          <ProposalsTab
-            proposals={proposals}
-            suppliers={suppliers}
-            items={items}
-            onSubmit={onSubmitProposal}
-            onDecide={onDecideProposal}
-            onReopen={onReopenProposal}
-            onDelete={onDeleteProposal}
-          />
+          <ProposalsTab wishes={wishes} onCreate={onCreateWish} onUpdate={onUpdateWish} onAssign={assignWish} onDelete={onDeleteWish} />
         )}
         {activeTab === 'settings' && (
           <SettingsTab
